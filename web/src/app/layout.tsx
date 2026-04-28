@@ -17,8 +17,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Leapter Starter",
-  description: "Starter template for building apps powered by Leapter",
+  title: "Pizza Pricing Calculator",
+  description: "Calculate pizza prices by size, toppings, and crust — powered by Leapter",
 };
 
 const showDevtools = process.env.NEXT_PUBLIC_LEAPTER_DEBUG === "true";
