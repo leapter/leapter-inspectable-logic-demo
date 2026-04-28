@@ -71,6 +71,33 @@ export async function fetchModelDefinition(
 }
 
 /**
+ * Fetch the OpenAPI spec from the runtime and extract the input schema
+ * properties for a given blueprint (enum values, types, descriptions).
+ */
+export async function describeBlueprint(
+  blueprintSlug: string,
+  config?: LeapterClientConfig,
+) {
+  const client = createLeapterClient(config ?? configFromEnv());
+  try {
+    const spec = await client.describe() as Record<string, unknown>;
+    const schemas = (spec as any)?.components?.schemas ?? {};
+    const inputKey = `${blueprintSlug.replace(/-/g, "_")}_Input`;
+    const inputSchema = schemas[inputKey];
+    return {
+      success: true as const,
+      inputProperties: inputSchema?.properties ?? {},
+    };
+  } catch (error) {
+    return {
+      success: false as const,
+      error:
+        error instanceof Error ? error.message : "Failed to fetch schema",
+    };
+  }
+}
+
+/**
  * Discover remote runtime endpoint from a Lab URL + API key.
  */
 export async function discoverRemote(labUrl: string, apiKey: string) {

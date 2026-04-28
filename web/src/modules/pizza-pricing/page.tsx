@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Pie, PieChart, Cell, Label } from "recharts";
-import { executeBlueprint } from "@/app/actions/blueprint";
+import { executeBlueprint, describeBlueprint } from "@/app/actions/blueprint";
 import { getClientConfig } from "@/lib/runtime-config";
 import {
   Card,
@@ -43,9 +43,13 @@ import {
   type FormValues,
   type DayOfWeek,
   type ToppingId,
-  DAYS_OF_WEEK,
+  DEFAULT_SIZES,
+  DEFAULT_CRUSTS,
+  DEFAULT_DAYS,
+  SIZE_META,
+  CRUST_META,
+  DAY_META,
   TOPPINGS,
-  TOPPING_PRICE,
   getTodayDayOfWeek,
 } from "./schema";
 
@@ -68,44 +72,38 @@ function formatSignedCurrency(value: number) {
   return `${sign}${formatCurrency(Math.abs(value))}`;
 }
 
-// Day metadata kept in one place so the selector and comparison stay in sync.
-const DAY_INFO: Record<
-  DayOfWeek,
-  { short: string; long: string; multiplier: number; tag?: string }
-> = {
-  monday: { short: "Mon", long: "Monday", multiplier: 1.0 },
-  tuesday: { short: "Tue", long: "Tuesday", multiplier: 0.8, tag: "−20%" },
-  wednesday: { short: "Wed", long: "Wednesday", multiplier: 0.9, tag: "−10%" },
-  thursday: { short: "Thu", long: "Thursday", multiplier: 1.0 },
-  friday: { short: "Fri", long: "Friday", multiplier: 1.1, tag: "+10%" },
-  saturday: { short: "Sat", long: "Saturday", multiplier: 1.15, tag: "+15%" },
-  sunday: { short: "Sun", long: "Sunday", multiplier: 1.0 },
+function capitalize(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+const CRUST_ICONS: Record<string, typeof Pizza> = {
+  thin: Layers,
+  regular: Pizza,
+  stuffed: Sparkles,
 };
 
 // ─── Pizza Size Selector ───────────────────────────────────────────────────────
 
-const sizes = [
-  { value: "small", label: "Small", diameter: '10"', basePrice: 8, ringSize: 56 },
-  { value: "medium", label: "Medium", diameter: '12"', basePrice: 12, ringSize: 76 },
-  { value: "large", label: "Large", diameter: '16"', basePrice: 16, ringSize: 96 },
-] as const;
-
 function PizzaSizeSelector({
   value,
+  options,
   onChange,
 }: {
   value: string;
-  onChange: (v: "small" | "medium" | "large") => void;
+  options: string[];
+  onChange: (v: string) => void;
 }) {
   return (
     <div className="grid grid-cols-3 gap-3">
-      {sizes.map((size) => {
-        const selected = value === size.value;
+      {options.map((size) => {
+        const selected = value === size;
+        const meta = SIZE_META[size];
+        const ringSize = meta?.ringSize ?? 76;
         return (
           <button
-            key={size.value}
+            key={size}
             type="button"
-            onClick={() => onChange(size.value)}
+            onClick={() => onChange(size)}
             className={cn(
               "flex flex-col items-center gap-2 rounded-xl border-2 p-5 transition-all",
               selected
@@ -125,8 +123,8 @@ function PizzaSizeSelector({
             <div
               className="rounded-full transition-all"
               style={{
-                width: size.ringSize,
-                height: size.ringSize,
+                width: ringSize,
+                height: ringSize,
                 background: selected
                   ? "color-mix(in oklch, var(--app-accent) 18%, transparent)"
                   : "color-mix(in oklch, var(--muted-foreground) 12%, transparent)",
@@ -142,8 +140,8 @@ function PizzaSizeSelector({
                 )}
                 style={{
                   color: selected ? "var(--app-accent)" : undefined,
-                  width: size.ringSize * 0.55,
-                  height: size.ringSize * 0.55,
+                  width: ringSize * 0.55,
+                  height: ringSize * 0.55,
                 }}
               />
             </div>
@@ -152,11 +150,13 @@ function PizzaSizeSelector({
                 className="text-sm font-semibold"
                 style={selected ? { color: "var(--app-accent)" } : undefined}
               >
-                {size.label}
+                {meta?.label ?? capitalize(size)}
               </span>
-              <span className="text-xs text-muted-foreground">
-                {size.diameter} · {formatCurrency(size.basePrice, 0)}
-              </span>
+              {meta?.diameter && (
+                <span className="text-xs text-muted-foreground">
+                  {meta.diameter}
+                </span>
+              )}
             </div>
           </button>
         );
@@ -174,8 +174,6 @@ function ToppingSelector({
   value: ToppingId[];
   onChange: (v: ToppingId[]) => void;
 }) {
-  const selectedTotal = value.length * TOPPING_PRICE;
-
   function toggle(id: ToppingId) {
     if (value.includes(id)) {
       onChange(value.filter((v) => v !== id));
@@ -196,10 +194,7 @@ function ToppingSelector({
               <span className="font-semibold text-foreground">
                 {value.length}
               </span>{" "}
-              selected ·{" "}
-              <span className="font-semibold text-foreground">
-                {formatCurrency(selectedTotal)}
-              </span>
+              selected
             </>
           )}
         </span>
@@ -246,56 +241,32 @@ function ToppingSelector({
           );
         })}
       </div>
-      <p className="text-xs text-muted-foreground">
-        {formatCurrency(TOPPING_PRICE)} per topping
-      </p>
     </div>
   );
 }
 
 // ─── Crust Selector ────────────────────────────────────────────────────────────
 
-const crusts = [
-  {
-    value: "thin",
-    label: "Thin",
-    description: "Crispy and light",
-    upcharge: 0,
-    icon: Layers,
-  },
-  {
-    value: "regular",
-    label: "Regular",
-    description: "Classic hand-tossed",
-    upcharge: 0,
-    icon: Pizza,
-  },
-  {
-    value: "stuffed",
-    label: "Stuffed",
-    description: "Cheese-filled edge",
-    upcharge: 3,
-    icon: Sparkles,
-  },
-] as const;
-
 function CrustSelector({
   value,
+  options,
   onChange,
 }: {
   value: string;
-  onChange: (v: "thin" | "regular" | "stuffed") => void;
+  options: string[];
+  onChange: (v: string) => void;
 }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-      {crusts.map((crust) => {
-        const Icon = crust.icon;
-        const selected = value === crust.value;
+      {options.map((crust) => {
+        const Icon = CRUST_ICONS[crust] ?? Pizza;
+        const selected = value === crust;
+        const meta = CRUST_META[crust];
         return (
           <button
-            key={crust.value}
+            key={crust}
             type="button"
-            onClick={() => onChange(crust.value)}
+            onClick={() => onChange(crust)}
             className={cn(
               "flex flex-col items-start gap-2 rounded-xl border-2 p-4 text-left transition-all",
               selected
@@ -312,41 +283,25 @@ function CrustSelector({
                 : undefined
             }
           >
-            <div className="flex w-full items-start justify-between gap-2">
-              <Icon
-                className={cn(
-                  "h-5 w-5",
-                  !selected && "text-muted-foreground",
-                )}
-                style={selected ? { color: "var(--app-accent)" } : undefined}
-              />
-              {crust.upcharge > 0 ? (
-                <span
-                  className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
-                  style={{
-                    backgroundColor:
-                      "color-mix(in oklch, var(--app-accent) 18%, transparent)",
-                    color: "var(--app-accent)",
-                  }}
-                >
-                  +{formatCurrency(crust.upcharge, 0)}
-                </span>
-              ) : (
-                <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                  Included
-                </span>
+            <Icon
+              className={cn(
+                "h-5 w-5",
+                !selected && "text-muted-foreground",
               )}
-            </div>
+              style={selected ? { color: "var(--app-accent)" } : undefined}
+            />
             <div>
               <p
                 className="text-sm font-semibold"
                 style={selected ? { color: "var(--app-accent)" } : undefined}
               >
-                {crust.label}
+                {meta?.label ?? capitalize(crust)}
               </p>
-              <p className="text-xs text-muted-foreground">
-                {crust.description}
-              </p>
+              {meta?.description && (
+                <p className="text-xs text-muted-foreground">
+                  {meta.description}
+                </p>
+              )}
             </div>
           </button>
         );
@@ -358,9 +313,7 @@ function CrustSelector({
 // ─── Today Banner ──────────────────────────────────────────────────────────────
 
 function TodayBanner({ today }: { today: DayOfWeek }) {
-  const info = DAY_INFO[today];
-  const discount = info.multiplier < 1;
-  const premium = info.multiplier > 1;
+  const meta = DAY_META[today];
   return (
     <div
       className="flex items-center gap-3 rounded-xl border px-4 py-3"
@@ -383,14 +336,11 @@ function TodayBanner({ today }: { today: DayOfWeek }) {
         />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold">Pricing for {info.long}</p>
+        <p className="text-sm font-semibold">
+          Pricing for {meta?.long ?? capitalize(today)}
+        </p>
         <p className="text-xs text-muted-foreground">
-          {discount
-            ? `${info.tag} discount applied today`
-            : premium
-              ? `${info.tag} premium applied today`
-              : "Regular rate today"}
-          {" — see how other days compare in your result."}
+          See how other days compare in your result.
         </p>
       </div>
     </div>
@@ -418,12 +368,22 @@ const breakdownConfig = {
 function TotalHeroCard({
   data,
   pickedDay,
+  days,
 }: {
   data: PizzaResult;
   pickedDay: DayOfWeek;
+  days: string[];
 }) {
-  const dayInfo = DAY_INFO[pickedDay];
+  const dayMeta = DAY_META[pickedDay];
   const delta = data.totalPrice - data.subtotal;
+  const pct = Math.round(Math.abs(1 - data.dayMultiplier) * 100);
+  const tag =
+    data.dayMultiplier < 0.995
+      ? `−${pct}%`
+      : data.dayMultiplier > 1.005
+        ? `+${pct}%`
+        : null;
+
   return (
     <Card
       className="bg-background"
@@ -436,7 +396,7 @@ function TotalHeroCard({
       <CardContent className="py-6">
         <div className="flex flex-col items-center text-center gap-1">
           <p className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
-            Your Pizza Total · {dayInfo.long}
+            Your Pizza Total · {dayMeta?.long ?? capitalize(pickedDay)}
           </p>
           <p
             className="text-5xl font-bold tracking-tight tabular-nums"
@@ -451,12 +411,7 @@ function TotalHeroCard({
                 {formatCurrency(Math.abs(delta))}
               </span>{" "}
               vs. regular price
-              {dayInfo.tag && (
-                <>
-                  {" "}
-                  ({dayInfo.tag})
-                </>
-              )}
+              {tag && <> ({tag})</>}
             </p>
           ) : (
             <p className="mt-1 text-muted-foreground">final price</p>
@@ -635,12 +590,14 @@ function BreakdownRow({
 function WeeklyComparison({
   data,
   pickedDay,
+  days,
 }: {
   data: PizzaResult;
   pickedDay: DayOfWeek;
+  days: string[];
 }) {
   const maxPrice = Math.max(...data.weeklyPrices);
-  const pickedIndex = DAYS_OF_WEEK.indexOf(pickedDay);
+  const pickedIndex = days.indexOf(pickedDay);
   const pickedPrice = data.weeklyPrices[pickedIndex];
 
   return (
@@ -653,21 +610,31 @@ function WeeklyComparison({
         <CardDescription>
           Same pizza, different day. Bars show the price; deltas are vs.{" "}
           <span className="font-medium text-foreground">
-            {DAY_INFO[pickedDay].long}
+            {DAY_META[pickedDay]?.long ?? capitalize(pickedDay)}
           </span>
           .
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          {DAYS_OF_WEEK.map((day, idx) => {
+          {days.map((day, idx) => {
             const price = data.weeklyPrices[idx];
-            const info = DAY_INFO[day];
+            if (price == null) return null;
+            const meta = DAY_META[day];
             const isActive = day === pickedDay;
             const widthPct = maxPrice > 0 ? (price / maxPrice) * 100 : 0;
             const delta = price - pickedPrice;
             const isCheaper = delta < -0.005;
             const isPricier = delta > 0.005;
+
+            const multiplier = data.subtotal > 0 ? price / data.subtotal : 1;
+            const pct = Math.round(Math.abs(1 - multiplier) * 100);
+            const tag =
+              multiplier < 0.995
+                ? `−${pct}%`
+                : multiplier > 1.005
+                  ? `+${pct}%`
+                  : null;
 
             const barColor = isActive
               ? "var(--app-accent)"
@@ -694,19 +661,19 @@ function WeeklyComparison({
                         : "text-muted-foreground",
                     )}
                   >
-                    {info.short}
+                    {meta?.short ?? day.slice(0, 3)}
                   </span>
-                  {info.tag && (
+                  {tag && (
                     <span
                       className="rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none"
                       style={{
-                        color: info.multiplier < 1
+                        color: multiplier < 1
                           ? "var(--chart-2)"
                           : "var(--app-accent)",
                         opacity: 0.9,
                       }}
                     >
-                      {info.tag}
+                      {tag}
                     </span>
                   )}
                 </div>
@@ -767,15 +734,17 @@ function WeeklyComparison({
 function PizzaResults({
   data,
   pickedDay,
+  days,
 }: {
   data: PizzaResult;
   pickedDay: DayOfWeek;
+  days: string[];
 }) {
   return (
     <div className="space-y-6">
-      <TotalHeroCard data={data} pickedDay={pickedDay} />
+      <TotalHeroCard data={data} pickedDay={pickedDay} days={days} />
       <BreakdownChart data={data} />
-      <WeeklyComparison data={data} pickedDay={pickedDay} />
+      <WeeklyComparison data={data} pickedDay={pickedDay} days={days} />
     </div>
   );
 }
@@ -829,7 +798,6 @@ function AutoRevealLogic({ trigger }: { trigger: boolean }) {
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function PizzaPricingPage() {
-  // Compute today once on mount so the form default is stable across renders.
   const [today] = useState<DayOfWeek>(() => getTodayDayOfWeek());
   const [result, setResult] = useState<PizzaResult | null>(null);
   const [resultDay, setResultDay] = useState<DayOfWeek>(today);
@@ -843,6 +811,25 @@ export default function PizzaPricingPage() {
   const [loading, setLoading] = useState(false);
   const [userInteracted, setUserInteracted] = useState(false);
   const requestSeq = useRef(0);
+
+  // Schema-driven options (fetched from blueprint's OpenAPI spec)
+  const [sizeOptions, setSizeOptions] = useState<string[]>([...DEFAULT_SIZES]);
+  const [crustOptions, setCrustOptions] = useState<string[]>([...DEFAULT_CRUSTS]);
+  const [dayOptions, setDayOptions] = useState<string[]>([...DEFAULT_DAYS]);
+
+  useEffect(() => {
+    async function loadSchema() {
+      const override = getClientConfig(project.slug, project.projectId);
+      const res = await describeBlueprint(project.blueprintSlug, override);
+      if (res.success) {
+        const props = res.inputProperties as Record<string, any>;
+        if (props.pizzaSize?.enum) setSizeOptions(props.pizzaSize.enum);
+        if (props.crustType?.enum) setCrustOptions(props.crustType.enum);
+        if (props.dayOfWeek?.enum) setDayOptions(props.dayOfWeek.enum);
+      }
+    }
+    loadSchema();
+  }, []);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema) as any,
@@ -858,10 +845,6 @@ export default function PizzaPricingPage() {
   const toppings = useWatch({ control: form.control, name: "toppings" });
   const crustType = useWatch({ control: form.control, name: "crustType" });
 
-  // Auto-recalculate whenever any input changes. Debounced so a flurry of
-  // clicks (e.g. picking several toppings) coalesces into a single request,
-  // and guarded with a sequence counter so a stale response can't overwrite
-  // a newer one.
   useEffect(() => {
     if (!pizzaSize || !crustType || !toppings) return;
 
@@ -888,7 +871,7 @@ export default function PizzaPricingPage() {
         setModelId(response.modelId);
         setSubmittedInput(values as unknown as Record<string, unknown>);
         setResult(response.data as unknown as PizzaResult);
-        setResultDay(values.dayOfWeek);
+        setResultDay(values.dayOfWeek as DayOfWeek);
         setTraceData(response.traceData);
       } else {
         setError(response.error);
@@ -973,6 +956,7 @@ export default function PizzaPricingPage() {
           <CardContent>
             <PizzaSizeSelector
               value={pizzaSize}
+              options={sizeOptions}
               onChange={(v) => {
                 setUserInteracted(true);
                 form.setValue("pizzaSize", v, { shouldValidate: true });
@@ -999,7 +983,7 @@ export default function PizzaPricingPage() {
               <div>
                 <CardTitle>Pick toppings</CardTitle>
                 <CardDescription>
-                  Mix and match — every topping is $1.50.
+                  Mix and match your favorites.
                 </CardDescription>
               </div>
             </div>
@@ -1028,7 +1012,7 @@ export default function PizzaPricingPage() {
               <div>
                 <CardTitle>Pick a crust</CardTitle>
                 <CardDescription>
-                  Stuffed crust adds $3 — the others are included.
+                  Choose your preferred crust style.
                 </CardDescription>
               </div>
             </div>
@@ -1036,6 +1020,7 @@ export default function PizzaPricingPage() {
           <CardContent>
             <CrustSelector
               value={crustType}
+              options={crustOptions}
               onChange={(v) => {
                 setUserInteracted(true);
                 form.setValue("crustType", v, { shouldValidate: true });
@@ -1066,7 +1051,7 @@ export default function PizzaPricingPage() {
                 loading && "opacity-70",
               )}
             >
-              <PizzaResults data={result} pickedDay={resultDay} />
+              <PizzaResults data={result} pickedDay={resultDay} days={dayOptions} />
             </div>
           </GlassMode.Result>
         ) : (

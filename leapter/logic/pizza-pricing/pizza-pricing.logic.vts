@@ -8,17 +8,17 @@ day-of-week multiplier that rewards off-peak ordering and prices in peak nights.
 All amounts are in USD.
 """
 function calculatePizzaPrice(
-    //* Size of the pizza (small, medium, or large)
-    pizzaSize: text,
+    //* Size of the pizza
+    pizzaSize: type string constrained_to ["small", "medium", "large"];,
 
-    //* Selected topping IDs (basic: tomato, onion, bell-pepper, mushroom, olive, sweet-corn; premium: bacon, prosciutto, mozzarella, shrimp)
+    //* Selected topping IDs
     toppings: list of text,
 
-    //* Type of crust (thin, regular, or stuffed)
-    crustType: text,
+    //* Type of crust
+    crustType: type string constrained_to ["thin", "regular", "stuffed"];,
 
-    //* Day the pizza is being ordered (monday through sunday, lowercase)
-    dayOfWeek: text) ->
+    //* Day the pizza is being ordered
+    dayOfWeek: type string constrained_to ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];) ->
     //* Final price for the chosen day, in USD
     totalPrice: number,
 
