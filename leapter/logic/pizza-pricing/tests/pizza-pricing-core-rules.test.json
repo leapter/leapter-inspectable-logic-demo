@@ -1,0 +1,160 @@
+{
+  "id": "64587f80-c510-42c3-a5c4-e55f0e8980ce",
+  "label": "Pizza Pricing — Core Rules",
+  "modelType": "testSuite",
+  "contentType": "application/json",
+  "testCases": [
+    {
+      "id": "578b8dfa-6b92-483f-b864-7e2dd49637f4",
+      "label": "Baseline: small thin-crust pizza on Monday with no toppings",
+      "group": "baseline",
+      "input": {
+        "pizzaSize": "small",
+        "toppings": [],
+        "crustType": "thin",
+        "dayOfWeek": "monday"
+      },
+      "expectedOutput": {
+        "basePrice": 8,
+        "toppingsCost": 0,
+        "crustUpcharge": 0,
+        "subtotal": 8,
+        "dayMultiplier": 1,
+        "totalPrice": 8,
+        "weeklyPrices": [
+          8,
+          6.4,
+          7.2,
+          8,
+          8.8,
+          9.2,
+          8
+        ]
+      }
+    },
+    {
+      "id": "28cab8ab-773c-4c31-a072-4e0112b17a14",
+      "label": "Pizza Tuesday: 20% discount on a medium with two toppings",
+      "group": "day-of-week-pricing",
+      "input": {
+        "pizzaSize": "medium",
+        "toppings": [
+          "pepperoni",
+          "mushrooms"
+        ],
+        "crustType": "regular",
+        "dayOfWeek": "tuesday"
+      },
+      "expectedOutput": {
+        "basePrice": 12,
+        "toppingsCost": 3,
+        "crustUpcharge": 0,
+        "subtotal": 15,
+        "dayMultiplier": 0.8,
+        "totalPrice": 12,
+        "weeklyPrices": [
+          15,
+          12,
+          13.5,
+          15,
+          16.5,
+          17.25,
+          15
+        ]
+      }
+    },
+    {
+      "id": "2d91ca0b-22b4-4a1a-aede-8fec87092082",
+      "label": "Stuffed crust upcharge:  added to a large with one topping",
+      "group": "crust-upcharge",
+      "input": {
+        "pizzaSize": "large",
+        "toppings": [
+          "cheese"
+        ],
+        "crustType": "stuffed",
+        "dayOfWeek": "thursday"
+      },
+      "expectedOutput": {
+        "basePrice": 16,
+        "toppingsCost": 1.5,
+        "crustUpcharge": 3,
+        "subtotal": 20.5,
+        "dayMultiplier": 1,
+        "totalPrice": 20.5,
+        "weeklyPrices": [
+          20.5,
+          16.4,
+          18.45,
+          20.5,
+          22.55,
+          23.58,
+          20.5
+        ]
+      }
+    },
+    {
+      "id": "396f3ac9-b938-4dd0-a33b-39a9df0c0a80",
+      "label": "Saturday peak premium: 15% surcharge on a four-topping large",
+      "group": "day-of-week-pricing",
+      "input": {
+        "pizzaSize": "large",
+        "toppings": [
+          "pepperoni",
+          "mushrooms",
+          "onions",
+          "olives"
+        ],
+        "crustType": "regular",
+        "dayOfWeek": "saturday"
+      },
+      "expectedOutput": {
+        "basePrice": 16,
+        "toppingsCost": 6,
+        "crustUpcharge": 0,
+        "subtotal": 22,
+        "dayMultiplier": 1.15,
+        "totalPrice": 25.3,
+        "weeklyPrices": [
+          22,
+          17.6,
+          19.8,
+          22,
+          24.2,
+          25.3,
+          22
+        ]
+      }
+    },
+    {
+      "id": "f4087986-f5ec-4543-9542-b374dc889588",
+      "label": "Combined rules: Wednesday discount stacks with stuffed crust upcharge",
+      "group": "combined-rules",
+      "input": {
+        "pizzaSize": "medium",
+        "toppings": [
+          "basil"
+        ],
+        "crustType": "stuffed",
+        "dayOfWeek": "wednesday"
+      },
+      "expectedOutput": {
+        "basePrice": 12,
+        "toppingsCost": 1.5,
+        "crustUpcharge": 3,
+        "subtotal": 16.5,
+        "dayMultiplier": 0.9,
+        "totalPrice": 14.85,
+        "weeklyPrices": [
+          16.5,
+          13.2,
+          14.85,
+          16.5,
+          18.15,
+          18.97,
+          16.5
+        ]
+      }
+    }
+  ]
+}
