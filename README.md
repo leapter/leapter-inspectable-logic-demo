@@ -264,6 +264,8 @@ pnpm vscode
 
 This installs the bundled VS Code extension from `.leapter-tools/leapter-blueprint-viewer.vsix` and opens the workspace. Open a `.logic.vts` file to see the visual Blueprint representation next to the text source.
 
+![Blueprint inside VS Code](assets/project.gif)
+
 Push Blueprints to Leapter Lab:
 
 ```bash
