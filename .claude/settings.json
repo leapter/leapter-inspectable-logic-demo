@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.leapter-tools/cli/leapter:*)",
+      "Bash(*/.leapter-tools/cli/leapter:*)",
+      "Bash(cd *&&*.leapter-tools/cli/leapter:*)",
+      "Bash(cd *&&*/.leapter-tools/cli/leapter:*)",
+      "Bash(../../.leapter-tools/cli/leapter validate:*)",
+      "Bash(~/.leapter/bin/leapter:*)",
+      "Bash(cd *&&*leapter:*)",
+      "Bash(npx tsc:*)",
+      "Bash(pnpm --filter web build)",
+      "Bash(python3 -c ':*)",
+      "Bash(../../.leapter-tools/cli/leapter runtime run --model vc-waterfall-calculator --input '{:*)",
+      "Bash(npx next:*)",
+      "Bash(../../.leapter-tools/cli/leapter runtime:*)",
+      "Bash(curl -s http://localhost:3000/*)",
+      "Bash(curl -s http://localhost:4004/*)",
+      "Bash(curl -s http://localhost:4004/)",
+      "mcp__Claude_Preview__preview_start"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "shadcn",
+    "next-devtools",
+    "vercel",
+    "context7"
+  ]
+}

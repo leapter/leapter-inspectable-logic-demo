@@ -1,0 +1,332 @@
+//#id fc5ffd5b-3f11-4eff-8a00-2c223fcb9c37
+//* Insurance Premium Calculator
+"""
+Calculates motor insurance premiums based on vehicle details, driver profile,
+and coverage selection. The premium is built up in layers: a base rate from
+the vehicle's risk profile, adjustments for the driver's experience and record,
+and final scaling based on coverage tier and deductible. 5donein lJust sproWhz is
+"""
+function calculatePremium(
+  //* Type of vehicle (car, truck, suv, or motorcycle)
+  vehicleType: _text,
+
+  //* Model year of the vehicle (1990-2026)
+  year: number,
+
+  //* Estimated annual mileage in miles
+  mileage: number,
+
+  //* Age of the primary driver in years (18-100)
+  driverAge: number,
+
+  //* Number of years the driver has held a valid license
+  yearsLicensed: number,
+
+  //* Whether the driver has a clean driving record (no accidents/violations in 3 years)
+  cleanRecord: boolean,
+
+  //* Coverage tier (liability, standard, or comprehensive)
+  coverageLevel: _text,
+
+  //* Chosen deductible amount in USD (250-5000)
+  deductible: number) -> 
+  //* Monthly premium amount in USD
+  monthlyPremium: number,
+
+  //* Annual premium amount in USD
+  annualPremium: number,
+
+  //* Base monthly rate before adjustments
+  baseRate: number,
+
+  //* Combined risk multiplier applied
+  riskFactor: number {
+  @S-724a3dc7
+  section "Determine base rate from vehicle type" {
+    """
+        Different vehicle types carry fundamentally different risk profiles
+        based on accident statistics and average repair costs. Motorcycles are
+        the most expensive due to higher injury severity in accidents. Trucks
+        carry higher liability due to their mass. 3
+        """
+    @D-d4a713f1
+    //* Look up base rate by vehicle type
+    choose {
+      @C-fee27f4c
+      //* Car
+      if (vehicleType is "car") {
+        @V-f3aca9fc
+        //* Set car base rate
+        baseRate = 120;
+      }
+      @C-dd708473
+      //* SUV
+      if (vehicleType is "suv") {
+        @V-b04720fe
+        //* Set SUV base rate
+        baseRate = 145;
+      }
+      @C-77084b2c
+      //* Truck
+      if (vehicleType is "truck") {
+        @V-23a07b35
+        //* Set truck base rate
+        baseRate = 155;
+      }
+      @C-8c3c0f87
+      //* Motorcycle
+      if (vehicleType is "motorcycle") {
+        @V-33ab1fc2
+        //* Set motorcycle base rate
+        baseRate = 180;
+      }
+      @E-1c1730cb
+      //* Unknown vehicle type
+      else {
+        @V-55c8c196
+        //* Default to car base rate
+        baseRate = 120;
+      }
+    }
+  }
+  @S-91104563
+  section "Apply vehicle age and mileage adjustments" {
+    """
+        Older vehicles and higher annual mileage both increase risk. The vehicle
+        age factor uses fixed model year thresholds. The mileage factor uses
+        annual mileage breakpoints at 15,000 and 25,000 miles. Both factors
+        multiply against the base rate.
+        """
+    @V-420135ea
+    //* Initialize vehicle age factor
+    var //* Vehicle age factor
+        vehicleAgeFactor: number = 1;
+    @D-3102420a
+    //* Determine vehicle age factor
+    choose {
+      @C-79780026
+      //* Vehicle older than 10 years (before 2016)
+      if (year < 2016) {
+        @V-e3303483
+        //* Apply 15% surcharge for old vehicles
+        vehicleAgeFactor = 1.15;
+      }
+      @C-a1224f73
+      //* Vehicle 5-10 years old (2016-2021)
+      if (year <= 2021) {
+        @V-0d6bcffd
+        //* Apply 5% surcharge for mid-age vehicles
+        vehicleAgeFactor = 1.05;
+      }
+      @E-f34ae9d7
+      //* Newer vehicle (2022 or later)
+      else {
+        @V-013d47e4
+        //* No surcharge for new vehicles
+        vehicleAgeFactor = 1;
+      }
+    }
+    @V-4d857eaa
+    //* Initialize mileage factor
+    var //* Mileage factor
+        mileageFactor: number = 1;
+    @D-2d80032a
+    //* Determine mileage factor
+    choose {
+      @C-c58a9a14
+      //* Very high mileage (above 25,000 miles)
+      if (mileage > 25000) {
+        @V-1fd29bf1
+        //* Apply 20% surcharge for very high mileage
+        mileageFactor = 1.2;
+      }
+      @C-b7d7272a
+      //* High mileage (above 15,000 miles)
+      if (mileage > 15000) {
+        @V-ffb6d14f
+        //* Apply 10% surcharge for high mileage
+        mileageFactor = 1.1;
+      }
+      @E-33878464
+      //* Normal mileage
+      else {
+        @V-b9ffd663
+        //* No surcharge for normal mileage
+        mileageFactor = 1;
+      }
+    }
+  }
+  @S-73669e2f
+  section "Assess driver risk profile" {
+    """
+        The driver's personal risk profile adjusts the premium through three
+        sub-factors: an age-based surcharge for drivers under 25, an experience
+        discount for seasoned drivers, and a clean record discount for
+        accident-free driving histories. The driver risk factor is the product
+        of all three sub-factors.
+        """
+    @V-4af6838e
+    //* Initialize young driver factor
+    var //* Young driver factor
+        youngDriverFactor: number = 1;
+    @D-5d5e4c92
+    //* Determine young driver surcharge
+    choose {
+      @C-6a948ce4
+      //* Driver under 25 — higher accident rate
+      if (driverAge < 25) {
+        @V-c0921b82
+        //* Apply 30% young driver surcharge
+        youngDriverFactor = 1.3;
+      }
+      @E-1d0d6baf
+      //* Driver 25 or older
+      else {
+        @V-79624d4f
+        //* No young driver surcharge
+        youngDriverFactor = 1;
+      }
+    }
+    @V-4658218f
+    //* Initialize experience factor
+    var //* Experience factor
+        experienceFactor: number = 1;
+    @D-214bfe62
+    //* Determine experience discount
+    choose {
+      @C-99508839
+      //* 10 or more years of experience
+      if (yearsLicensed >= 10) {
+        @V-d865b53a
+        //* Apply 15% experience discount
+        experienceFactor = 0.85;
+      }
+      @C-a3cefff8
+      //* 5 or more years of experience
+      if (yearsLicensed >= 5) {
+        @V-b17079dd
+        //* Apply 10% experience discount
+        experienceFactor = 0.9;
+      }
+      @E-e569f5b6
+      //* Less than 5 years of experience
+      else {
+        @V-ad508a03
+        //* No experience discount
+        experienceFactor = 1;
+      }
+    }
+    @V-72095933
+    //* Initialize clean record factor
+    var //* Clean record factor
+        cleanRecordFactor: number = 1;
+    @D-a55b98bb
+    //* Determine clean record discount
+    choose {
+      @C-69c4f86e
+      //* Driver has clean record
+      if (cleanRecord) {
+        @X-8a0cd156
+        //* Apply 15% clean record discount
+        cleanRecordFactor = 0.85;
+      }
+      @E-1543a603
+      //* Driver has incidents on record
+      else {
+        @V-f4f30c43
+        //* No clean record discount
+        cleanRecordFactor = 1;
+      }
+    }
+  }
+  @S-226b00cd
+  section "Apply coverage tier and deductible" {
+    """
+        The coverage tier scales the premium to reflect breadth of protection.
+        Liability-only covers damage to others but not the policyholder's own
+        vehicle. Comprehensive covers everything including theft, weather, and
+        vandalism. A higher deductible reduces the premium by 3% per 500 USD
+        above the minimum of 250 USD, capped at a minimum factor of 0.85.
+        """
+    @V-21b2ba37
+    //* Initialize coverage multiplier
+    var //* Coverage multiplier
+        coverageMultiplier: number = 1;
+    @D-6a27d771
+    //* Determine coverage tier multiplier
+    choose {
+      @C-1e346780
+      //* Liability only
+      if (coverageLevel is "liability") {
+        @V-2bf2c47e
+        //* Set liability multiplier
+        coverageMultiplier = 0.6;
+      }
+      @C-a473de04
+      //* Standard coverage
+      if (coverageLevel is "standard") {
+        @V-4e589190
+        //* Set standard multiplier
+        coverageMultiplier = 1;
+      }
+      @C-ce04809b
+      //* Comprehensive coverage
+      if (coverageLevel is "comprehensive") {
+        @V-bcecef04
+        //* Set comprehensive multiplier
+        coverageMultiplier = 1.45;
+      }
+      @E-2b7831ec
+      //* Default to standard
+      else {
+        @V-75f3a88c
+        //* Set default multiplier
+        coverageMultiplier = 1;
+      }
+    }
+    @V-40132f60
+    //* Calculate deductible factor
+    var //* Deductible factor
+        deductibleFactor: number = 1 - (deductible - 250) / 500 * 0.03;
+    @D-0c121a66
+    //* Cap deductible factor at minimum 0.85
+    choose {
+      @C-c77e3939
+      //* Factor below minimum cap
+      if (deductibleFactor < 0.85) {
+        @V-7ef871dd
+        //* Apply minimum cap
+        deductibleFactor = 0.85;
+      }
+    }
+  }
+  @S-17756891
+  section "Compute final premium" {
+    """
+        The monthly premium is the product of the base rate and all adjustment
+        factors. The risk factor is the product of vehicle and driver adjustments
+        only (excluding coverage tier and deductible), representing the customer's
+        personal risk score for transparency in the UI.
+        """
+    @V-d293c809
+    //* Calculate raw monthly premium
+    var //* Raw monthly premium
+        rawMonthly: number = baseRate * vehicleAgeFactor * mileageFactor * youngDriverFactor * experienceFactor * cleanRecordFactor * coverageMultiplier * deductibleFactor;
+    @V-89601389
+    //* Round monthly premium to two decimal places
+    monthlyPremium = Math.round(rawMonthly * 100) / 100;
+    @V-f5f1fa65
+    //* Calculate and round annual premium
+    annualPremium = Math.round(rawMonthly * 12 * 100) / 100;
+    @V-e1229746
+    //* Calculate raw risk factor
+    var //* Raw risk factor
+        rawRiskFactor: number = vehicleAgeFactor * mileageFactor * youngDriverFactor * experienceFactor * cleanRecordFactor;
+    @V-24b09129
+    //* Round risk factor to two decimal places
+    riskFactor = Math.round(rawRiskFactor * 100) / 100;
+  }
+  @R-2b91d6c2
+  //* Return results
+  return;
+}

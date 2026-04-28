@@ -1,0 +1,10 @@
+{
+  "leapFormat": 1,
+  "app": {
+    "id": "4fe44512-4b05-4316-bfdf-256c065e58a7",
+    "label": "Insurance Premium Calculator",
+    "description": "Motor insurance premium quote calculator powered by Leapter"
+  },
+  "version": "1.0.0",
+  "main": "insurance-premium-calculator"
+}

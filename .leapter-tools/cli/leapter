@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Prefer the bundled CLI in this repo, fall back to global install
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+LOCAL_CLI="$SCRIPT_DIR/leapter-cli.cjs"
+GLOBAL_CLI="$HOME/.leapter/bin/leapter-cli.cjs"
+
+if [ -f "$LOCAL_CLI" ]; then
+  exec node "$LOCAL_CLI" "$@"
+elif [ -f "$GLOBAL_CLI" ]; then
+  exec node "$GLOBAL_CLI" "$@"
+else
+  echo "Error: leapter CLI not found. Expected at:" >&2
+  echo "  $LOCAL_CLI (local)" >&2
+  echo "  $GLOBAL_CLI (global)" >&2
+  exit 1
+fi

@@ -1,0 +1,108 @@
+{
+  "id": "7c35e5a1-819d-4bf6-aa11-7bd5d7620c8d",
+  "label": "Premium calculation scenarios",
+  "modelType": "testSuite",
+  "contentType": "application/json",
+  "testCases": [
+    {
+      "id": "9ab4eb35-d35a-4f88-9603-9039bbdb4652",
+      "label": "Safe 35yo driver, 2020 car, standard coverage",
+      "input": {
+        "vehicleType": "car",
+        "year": 2020,
+        "mileage": 10000,
+        "driverAge": 35,
+        "yearsLicensed": 15,
+        "cleanRecord": true,
+        "coverageLevel": "standard",
+        "deductible": 1000
+      },
+      "expectedOutput": {
+        "baseRate": 120,
+        "monthlyPremium": 86.94,
+        "annualPremium": 1043.26,
+        "riskFactor": 0.76
+      }
+    },
+    {
+      "id": "f836b9d0-84ec-4ce6-9541-4dcbbfe24651",
+      "label": "Young rider, 2022 motorcycle, comprehensive coverage",
+      "input": {
+        "vehicleType": "motorcycle",
+        "year": 2022,
+        "mileage": 5000,
+        "driverAge": 22,
+        "yearsLicensed": 2,
+        "cleanRecord": false,
+        "coverageLevel": "comprehensive",
+        "deductible": 500
+      },
+      "expectedOutput": {
+        "baseRate": 180,
+        "monthlyPremium": 334.21,
+        "annualPremium": 4010.53,
+        "riskFactor": 1.3
+      }
+    },
+    {
+      "id": "8efa0bff-cbdd-4cf9-b8f8-2a1cf1cb8ddf",
+      "label": "Experienced truck driver, high mileage, liability only",
+      "input": {
+        "vehicleType": "truck",
+        "year": 2015,
+        "mileage": 28000,
+        "driverAge": 50,
+        "yearsLicensed": 30,
+        "cleanRecord": true,
+        "coverageLevel": "liability",
+        "deductible": 2500
+      },
+      "expectedOutput": {
+        "baseRate": 155,
+        "monthlyPremium": 80.21,
+        "annualPremium": 962.49,
+        "riskFactor": 1
+      }
+    },
+    {
+      "id": "f127f1bf-cf91-4a20-9996-7d77a4387a79",
+      "label": "SUV, 2018, moderate mileage (from trace)",
+      "input": {
+        "vehicleType": "suv",
+        "year": 2018,
+        "mileage": 18000,
+        "driverAge": 28,
+        "yearsLicensed": 8,
+        "cleanRecord": true,
+        "coverageLevel": "standard",
+        "deductible": 750
+      },
+      "expectedOutput": {
+        "baseRate": 145,
+        "monthlyPremium": 124.27,
+        "annualPremium": 1491.3,
+        "riskFactor": 0.88
+      }
+    },
+    {
+      "id": "3b7f9c52-4e1a-4d8b-9c6a-5d2e8f1a4b9c",
+      "label": "Experienced rider, 2019 motorcycle, standard coverage",
+      "input": {
+        "vehicleType": "motorcycle",
+        "year": 2019,
+        "mileage": 6000,
+        "driverAge": 45,
+        "yearsLicensed": 20,
+        "cleanRecord": true,
+        "coverageLevel": "standard",
+        "deductible": 1000
+      },
+      "expectedOutput": {
+        "baseRate": 180,
+        "monthlyPremium": 130.41,
+        "annualPremium": 1564.89,
+        "riskFactor": 0.76
+      }
+    }
+  ]
+}
