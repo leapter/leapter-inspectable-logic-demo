@@ -6,7 +6,7 @@ Turn business requirements into working web apps — powered by [Leapter](https:
 
 ## What's Included
 
-- A working **Insurance Premium Calculator** example (blueprint + UI)
+- A working **Pizza Pricing Calculator** example (blueprint + UI)
 - **Glass Mode** — click any result to see the execution trace step by step
 - Next.js 16, React 19, Tailwind 4, shadcn/ui — all pre-configured
 - Bundled Leapter CLI — no separate install needed

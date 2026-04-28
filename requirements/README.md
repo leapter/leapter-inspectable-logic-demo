@@ -16,16 +16,18 @@ Read the requirements in requirements/ and build the demo app.
 ## Example
 
 ```markdown
-# Acme Corp — Insurance Premium Calculator
+# Acme Pizza — Pizza Pricing Calculator
 
 ## Business Rules
-- Base premium depends on vehicle type, age, and mileage
-- Discount for multi-year contracts (5% per year, max 20%)
-- Surcharge for high-risk zip codes
+- Base price depends on pizza size (small / medium / large)
+- Each topping adds a flat $1.50
+- Stuffed crust adds a $3 upcharge
+- Day-of-week pricing: Pizza Tuesday is 20% off, weekends carry a small premium
 
 ## UI Requirements
-- Professional look (brand colors: #1B365D, #F5A623)
-- Tabbed form: Vehicle Info → Driver Profile → Coverage Options
-- Results: summary card with monthly/annual premium + breakdown chart
+- Friendly, food-themed look (warm orange accent)
+- One-screen form: size cards, topping picker, crust cards
+- Live recalculation on every input change — no submit button
+- Results: total price + breakdown donut + 7-day comparison strip
 - Mobile-friendly
 ```

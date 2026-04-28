@@ -8,8 +8,8 @@ Veritas is a business logic DSL. Programs are called **blueprints**. Every state
 
 Veritas blueprints are **living documentation** of business rules. They are meant to be validated by **domain experts who are not programmers**. Every naming choice should prioritize human readability:
 
-- Use descriptive variable names: `monthlyPremium`, not `mp` or `premium`
-- Use full words in labels: `//* Calculate monthly insurance premium`, not `//* Calc premium`
+- Use descriptive variable names: `totalPrice`, not `tp` or `price`
+- Use full words in labels: `//* Calculate total pizza price`, not `//* Calc price`
 - Section descriptions explain the **business rationale** — reference regulations, policies, or domain context
 - Avoid abbreviations: `discountRate`, not `discRate`; `customerAge`, not `age` (when ambiguous)
 - Loop variables are the one exception where short names (`index`, `itemIndex`) are acceptable
@@ -20,7 +20,7 @@ Veritas blueprints are **living documentation** of business rules. They are mean
 - **One business concept per section.** Split when the narrative shifts — "determine rates" and "apply rates" are two sections.
 - **Nest subsections for complex steps.** A parent section introduces the concept, child sections handle the sub-steps.
 - **Keep sections to ~15-20 statements.** Beyond that, look for natural split points.
-- **Labels describe the action in domain language.** `//* Apply no-claims discount for clean driving records` not `//* Multiply by 0.9`.
+- **Labels describe the action in domain language.** `//* Apply Pizza Tuesday 20% discount` not `//* Multiply by 0.8`.
 - **Prefer `and`/`or`/`not`/`is` over symbolic operators.** Natural language operators make conditions readable by non-programmers.
 - **Use `for...in` when you don't need the index.** `for (var item in items)` is more readable than index-based loops.
 - **Validate early, fail fast.** Put input validation sections at the top of the function with `throw` for hard rejections.

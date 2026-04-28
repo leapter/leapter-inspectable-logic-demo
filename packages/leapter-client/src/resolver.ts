@@ -71,8 +71,7 @@ function buildSlugMap(spec: unknown): Map<string, string> {
   const mapping = new Map<string, string>();
   for (const { slug, modelId } of models) {
     mapping.set(slug, modelId);
-    // Also map dash-variant so "insurance-premium-calculator" finds
-    // "insurance_premium_calculator"
+    // Also map dash-variant so "pizza-pricing" finds "pizza_pricing"
     const dashVariant = slug.replace(/_/g, "-");
     if (dashVariant !== slug) mapping.set(dashVariant, modelId);
   }
