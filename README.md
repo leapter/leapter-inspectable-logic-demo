@@ -4,6 +4,8 @@ Turn business requirements into working web apps — powered by [Leapter](https:
 
 **No coding required.** You describe your business rules, Claude builds the app. Business logic lives in auditable Leapter blueprints, not buried in code.
 
+![Demo](demo.gif)
+
 ## What's Included
 
 - A working **Pizza Pricing Calculator** example (blueprint + UI)
