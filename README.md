@@ -128,7 +128,7 @@ The prose states intent. The Veritas logic defines behavior. When those disagree
 
 Rendered as a Leapter Blueprint, the same logic becomes an executable diagram:
 
-![Rendered Leapter Blueprint beside the app form](assets/demo-frame-04.png)
+![Rendered Leapter Blueprint beside the app form](assets/blueprint.webp)
 
 ## See The Logic That Ran
 
@@ -300,13 +300,17 @@ The boundary is intentional. Side-effect-free logic is easier to inspect, test, 
 
 ## How This Differs From Other Approaches
 
+The literate programming part matters. Veritas sections do not just group code; they carry the intent behind the rule in the same artifact as the executable logic. That is the difference between "the system checks this threshold" and "the system checks this threshold because this policy exception exists."
+
+Visual programming makes the structure inspectable. Literate programming keeps the reason attached to the structure. AI makes that richer artifact practical to generate and maintain.
+
 | Approach | What happens to business logic |
 |---|---|
 | Generated app code | Logic works, but often disappears into ordinary source files |
 | Prompt-only agent | Logic is flexible, but runtime behavior may vary |
-| Low-code workflow | Logic is visual, but often tied to a platform runtime and workflow model |
+| Low-code workflow | Logic is visual, but often tied to a platform runtime and workflow model, with limited literate context |
 | Documentation | Intent is readable, but does not execute |
-| Rules engine | Logic can be deterministic, but the authoring/review artifact is usually not built for AI-assisted literate visual editing |
+| Rules engine | Logic can be deterministic, but the authoring/review artifact is usually not built for AI-assisted literate visual editing, trace replay, and visual diffs |
 | Leapter / Veritas | Logic is text in Git, visual in the editor, executable at runtime, traceable after each run, reviewable with visual diffs, and editable with AI support |
 
 ## Current State
@@ -319,14 +323,15 @@ What is working here:
 - local Blueprint execution
 - a full pizza pricing example
 - Glass Mode trace inspection
+- AI-assisted Blueprint edits
+- AI-assisted test creation
+- visual diffs
 - Claude Code instructions and skills
 - VS Code Blueprint viewer setup
 
 What is still evolving:
 
-- the best UX for editing specifications and diagrams together in the web editor
-- AI-assisted edits that keep the literate specification and visual logic aligned
-- visual diffs for reviewing proposed and versioned changes
+- the best UX for bringing literate specifications, visual diagrams, AI edits, tests, and review comments together in the web editor
 - the exact open-source shape of Veritas, the viewer, and runtime pieces
 - more example projects beyond the starter
 - smoother support across coding agents
