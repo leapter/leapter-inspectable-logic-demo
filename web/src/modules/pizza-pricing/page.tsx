@@ -359,12 +359,6 @@ interface PizzaResult {
   weeklyPrices: number[];
 }
 
-const breakdownConfig = {
-  base: { label: "Base price", color: "var(--chart-1)" },
-  toppings: { label: "Toppings", color: "var(--chart-2)" },
-  crust: { label: "Crust upcharge", color: "var(--chart-3)" },
-} satisfies ChartConfig;
-
 function TotalHeroCard({
   data,
   pickedDay,
@@ -422,7 +416,19 @@ function TotalHeroCard({
   );
 }
 
-function BreakdownChart({ data }: { data: PizzaResult }) {
+const breakdownConfig = {
+  base: { label: "Base price", color: "var(--chart-1)" },
+  toppings: { label: "Toppings", color: "var(--chart-2)" },
+  crust: { label: "Crust upcharge", color: "var(--chart-3)" },
+} satisfies ChartConfig;
+
+function BreakdownChart({
+  data,
+  pickedDay,
+}: {
+  data: PizzaResult;
+  pickedDay: DayOfWeek;
+}) {
   const chartData = useMemo(() => {
     const entries = [
       { key: "base", label: "Base price", value: data.basePrice, fill: "var(--color-base)" },
@@ -432,11 +438,19 @@ function BreakdownChart({ data }: { data: PizzaResult }) {
     return entries.filter((entry) => entry.value > 0);
   }, [data]);
 
+  const dayAdjustment = data.totalPrice - data.subtotal;
+  const hasDayAdjustment = Math.abs(dayAdjustment) > 0.005;
+  const dayMeta = DAY_META[pickedDay];
+  const pct = Math.round(Math.abs(1 - data.dayMultiplier) * 100);
+  const dayLabel = dayAdjustment < 0
+    ? `${dayMeta?.long ?? capitalize(pickedDay)} discount (−${pct}%)`
+    : `${dayMeta?.long ?? capitalize(pickedDay)} premium (+${pct}%)`;
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Price Breakdown</CardTitle>
-        <CardDescription>How your subtotal is composed</CardDescription>
+        <CardDescription>How your total is composed</CardDescription>
       </CardHeader>
       <CardContent className="grid grid-cols-1 sm:grid-cols-[200px_1fr] items-center gap-6">
         <ChartContainer
@@ -536,10 +550,30 @@ function BreakdownChart({ data }: { data: PizzaResult }) {
             mutedWhenZero
           />
           <Separator />
-          <div className="flex items-center justify-between font-semibold">
+          <div className="flex items-center justify-between">
             <span>Subtotal</span>
-            <span className="tabular-nums">
+            <span className="tabular-nums font-medium">
               {formatCurrency(data.subtotal)}
+            </span>
+          </div>
+          {hasDayAdjustment && (
+            <div
+              className={cn(
+                "flex items-center justify-between",
+                dayAdjustment < 0 ? "text-emerald-600" : "text-orange-600",
+              )}
+            >
+              <span>{dayLabel}</span>
+              <span className="tabular-nums font-medium">
+                {formatSignedCurrency(dayAdjustment)}
+              </span>
+            </div>
+          )}
+          <Separator />
+          <div className="flex items-center justify-between font-semibold">
+            <span>Total</span>
+            <span className="tabular-nums">
+              {formatCurrency(data.totalPrice)}
             </span>
           </div>
         </div>
@@ -743,7 +777,7 @@ function PizzaResults({
   return (
     <div className="space-y-6">
       <TotalHeroCard data={data} pickedDay={pickedDay} days={days} />
-      <BreakdownChart data={data} />
+      <BreakdownChart data={data} pickedDay={pickedDay} />
       <WeeklyComparison data={data} pickedDay={pickedDay} days={days} />
     </div>
   );
@@ -777,6 +811,93 @@ function IntroBanner({ visible }: { visible: boolean }) {
             Change any input to see the price update. The logic panel will
             open automatically to turn the calculation logic into a glass box.
           </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StickyPriceBar({
+  data,
+  loading,
+  pickedDay,
+}: {
+  data: PizzaResult | null;
+  loading: boolean;
+  pickedDay: DayOfWeek;
+}) {
+  const [bounce, setBounce] = useState(false);
+  const prevPrice = useRef(data?.totalPrice);
+
+  useEffect(() => {
+    if (data && prevPrice.current !== undefined && data.totalPrice !== prevPrice.current) {
+      setBounce(true);
+      const t = setTimeout(() => setBounce(false), 400);
+      return () => clearTimeout(t);
+    }
+  }, [data?.totalPrice]);
+
+  useEffect(() => {
+    if (data) prevPrice.current = data.totalPrice;
+  }, [data?.totalPrice]);
+
+  if (!data) return null;
+
+  const dayMeta = DAY_META[pickedDay];
+  const pct = Math.round(Math.abs(1 - data.dayMultiplier) * 100);
+  const tag =
+    data.dayMultiplier < 0.995
+      ? `−${pct}%`
+      : data.dayMultiplier > 1.005
+        ? `+${pct}%`
+        : null;
+
+  const isDiscount = data.dayMultiplier < 0.995;
+  const isPremium = data.dayMultiplier > 1.005;
+  const dayAdjustment = data.totalPrice - data.subtotal;
+
+  return (
+    <div className="sticky bottom-0 -mx-6 -mb-10 z-10">
+      <div className="border-t border-border/60 bg-background/90 backdrop-blur-xl px-6 py-4">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
+          <div className="flex items-center gap-5 min-w-0">
+            <p
+              className={cn(
+                "text-3xl font-bold tabular-nums tracking-tight origin-left",
+                loading && "opacity-50",
+                bounce && "animate-price-bounce",
+              )}
+              style={{ color: "var(--app-accent)" }}
+            >
+              {formatCurrency(data.totalPrice)}
+            </p>
+            <Separator orientation="vertical" className="h-8" />
+            <div className="hidden sm:flex flex-col gap-0.5">
+              <span className="text-sm font-medium text-foreground">
+                {dayMeta?.long ?? capitalize(pickedDay)}
+                {tag && (
+                  <span
+                    className={cn(
+                      "ml-2 text-xs font-semibold",
+                      isDiscount && "text-emerald-600",
+                      isPremium && "text-orange-600",
+                    )}
+                  >
+                    {tag}
+                    {isDiscount && ` · save ${formatCurrency(Math.abs(dayAdjustment))}`}
+                    {isPremium && ` · ${formatCurrency(Math.abs(dayAdjustment))} extra`}
+                  </span>
+                )}
+              </span>
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {formatCurrency(data.basePrice)} base
+                {data.toppingsCost > 0 &&
+                  ` · ${formatCurrency(data.toppingsCost)} toppings`}
+                {data.crustUpcharge > 0 &&
+                  ` · ${formatCurrency(data.crustUpcharge)} crust`}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1070,6 +1191,8 @@ export default function PizzaPricingPage() {
           )
         )}
       </div>
+
+      <StickyPriceBar data={result} loading={loading} pickedDay={resultDay} />
     </GlassMode>
   );
 }

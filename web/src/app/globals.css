@@ -171,3 +171,12 @@
 .scrollbar-subtle::-webkit-scrollbar-corner {
   background: transparent;
 }
+
+@keyframes price-bounce {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+.animate-price-bounce {
+  animation: price-bounce 400ms ease-out;
+}
