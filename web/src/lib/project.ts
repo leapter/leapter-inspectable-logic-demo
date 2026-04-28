@@ -2,7 +2,7 @@
  * Single-app project configuration.
  *
  * This file defines the one project this kit serves. Edit these values
- * to match your Leapter project manifest (logic/leapter.project).
+ * to match your Leapter project manifest (leapter/leapter.project).
  */
 export const projectConfig = {
   slug: "insurance-premium-calculation",

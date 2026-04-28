@@ -29,7 +29,7 @@ Run these checks in parallel to build context:
 - `node --version` — is Node.js installed?
 - `pnpm --version` — is pnpm installed?
 - `ls requirements/` — what customer requirements exist?
-- `ls logic/` — does the Leapter project exist?
+- `ls leapter/` — does the Leapter project exist?
 - `cat web/src/lib/project.ts` — what project is configured?
 - `.leapter-tools/cli/leapter --version` — is the CLI available? (see Phase 1b)
 - `ls web/node_modules/.package-lock.json 2>/dev/null` — are dependencies installed?

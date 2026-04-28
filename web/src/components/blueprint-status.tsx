@@ -140,7 +140,7 @@ export function BlueprintStatus({
                   <>
                     Make sure the blueprint file exists at{" "}
                     <code className="bg-background/50 px-1.5 py-0.5 rounded text-xs font-mono">
-                      logic/logic/{blueprintSlug}/
+                      leapter/logic/{blueprintSlug}/
                     </code>
                   </>
                 )}

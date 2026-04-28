@@ -6,7 +6,7 @@ when the user provides their own requirements.
 
 Your job is to read the requirements in `requirements/` and build a working web application
 tailored to the customer's needs, powered by Leapter. When the user describes a new use case:
-1. Replace the example blueprints in `logic/` with new ones matching their requirements
+1. Replace the example blueprints in `leapter/` with new ones matching their requirements
 2. Replace the example UI in `web/src/modules/` with a bespoke page for their use case
 3. Update `web/src/lib/project.ts` with the new project's name, slug, and IDs
 4. Update `STYLEGUIDE.md` if the branding changes
@@ -190,10 +190,10 @@ use the full path from the repo root:
 .leapter-tools/cli/leapter runtime serve
 ```
 
-When running from the `logic/` directory, use the relative path back:
+When running from the `leapter/` directory, use the relative path back:
 
 ```bash
-cd logic
+cd leapter
 ../.leapter-tools/cli/leapter validate
 ../.leapter-tools/cli/leapter runtime run --model <slug> --input '{}'
 ```
@@ -207,7 +207,7 @@ This is a **single-app** kit — one project, one set of business logic, one UI.
 | Layer | Where | What goes here |
 |-------|-------|---------------|
 | **Requirements** | `requirements/` | Business rules, specs, notes (input for Claude) |
-| **Business logic** | `logic/` | Leapter project — blueprints as `.logic.vts` files |
+| **Business logic** | `leapter/` | Leapter project — blueprints as `.logic.vts` files |
 | **UI** | `web/src/modules/` | Form, schema, page component for the app |
 | **API bridge** | `web/src/app/actions/` | Server Actions that call Leapter runtime |
 | **Project config** | `web/src/lib/project.ts` | Single project definition (slug, IDs, accent color) |
@@ -231,10 +231,10 @@ Read everything in `requirements/` and `STYLEGUIDE.md`. Identify:
 - Branding → apply to `STYLEGUIDE.md`, colors, fonts
 
 ### 2. Create or update blueprints
-The Leapter project lives in `logic/`:
+The Leapter project lives in `leapter/`:
 1. Create blueprint(s) using the `leapter-veritas` skill
-2. Set `main` in `logic/leapter.project` to the entry-point blueprint slug
-3. Validate: `cd logic && ../.leapter-tools/cli/leapter validate`
+2. Set `main` in `leapter/leapter.project` to the entry-point blueprint slug
+3. Validate: `cd leapter && ../.leapter-tools/cli/leapter validate`
 4. Test: `../.leapter-tools/cli/leapter runtime run --model <slug> --input '{...}'`
 
 ### 3. Build the UI
@@ -344,7 +344,7 @@ leapter-starter-nextjs/
 ├── CLAUDE.md                          ← You are here
 ├── STYLEGUIDE.md                      ← Visual identity (colors, fonts, components)
 ├── requirements/                      ← Business rules & specs (input for Claude)
-├── logic/                             ← Leapter project (single project)
+├── leapter/                           ← Leapter project (single project)
 │   ├── leapter.project                ← Manifest (app.id, main, label)
 │   ├── logic/<slug>/<slug>.logic.vts  ← Blueprint files
 │   └── data/                          ← Shared types (optional)

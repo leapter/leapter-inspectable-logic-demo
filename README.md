@@ -72,7 +72,7 @@ Or drop a requirements document (PDF, Word, Excel, or plain notes) into
 ```
 leapter-starter-nextjs/
 ├── requirements/          Business rules & specs (input for Claude)
-├── logic/                 Leapter blueprints (.vts files)
+├── leapter/               Leapter blueprints (.vts files)
 ├── web/                   Next.js app (UI)
 ├── packages/
 │   └── leapter-client/    Runtime API client

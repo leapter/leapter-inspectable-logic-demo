@@ -114,4 +114,4 @@ When adapting this app for a new use case, update these files:
 | Fonts                       | `web/public/fonts/` + `layout.tsx`       |
 | Landing page copy           | `web/src/app/page.tsx`                   |
 | Requirements                | `requirements/`                          |
-| Business logic              | `logic/`                                 |
+| Business logic              | `leapter/`                               |

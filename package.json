@@ -6,12 +6,12 @@
     "postinstall": "npm ci --prefix .leapter-tools/cli --silent --no-audit --no-fund",
     "predev": "pnpm install --frozen-lockfile --silent",
     "dev": "concurrently --names runtime,app --prefix-colors blue,green \"pnpm run dev:runtime\" \"pnpm run dev:app\"",
-    "dev:runtime": ".leapter-tools/cli/leapter runtime serve --path ./logic --port 4004",
+    "dev:runtime": ".leapter-tools/cli/leapter runtime serve --path ./leapter --port 4004",
     "dev:app": "pnpm --filter web dev --port 4000",
     "build": "pnpm --filter web build",
     "lint": "pnpm --filter web lint",
-    "validate": "cd logic && ../.leapter-tools/cli/leapter validate",
-    "push": "cd logic && ../.leapter-tools/cli/leapter push"
+    "validate": "cd leapter && ../.leapter-tools/cli/leapter validate",
+    "push": "cd leapter && ../.leapter-tools/cli/leapter push"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"
