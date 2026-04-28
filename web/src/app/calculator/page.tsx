@@ -1,5 +1,5 @@
-import PizzaPricingPage from "@/modules/pizza-pricing/page";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <PizzaPricingPage />;
+  redirect("/");
 }

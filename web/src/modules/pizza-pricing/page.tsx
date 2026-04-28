@@ -22,6 +22,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
+import Image from "next/image";
 import {
   Pizza,
   Layers,
@@ -34,6 +35,7 @@ import {
 import { cn } from "@/lib/utils";
 import { BlueprintStatus } from "@/components/blueprint-status";
 import { GlassMode } from "@/components/glass-mode";
+import { useGlassContext } from "@/components/glass-mode/context";
 import type { TraceData } from "@leapter/client";
 import { projectConfig } from "@/lib/project";
 import {
@@ -778,6 +780,52 @@ function PizzaResults({
   );
 }
 
+// ─── Intro Banner ─────────────────────────────────────────────────────────────
+
+function IntroBanner({ visible }: { visible: boolean }) {
+  return (
+    <div
+      className={cn(
+        "overflow-hidden transition-all duration-500 ease-out",
+        visible
+          ? "max-h-40 opacity-100"
+          : "max-h-0 opacity-0 pointer-events-none",
+      )}
+    >
+      <div className="flex items-start gap-3 rounded-xl border border-border/50 bg-muted/30 p-4">
+        <Image
+          src="/leapter-logo-icon.svg"
+          alt=""
+          width={18}
+          height={18}
+          className="mt-0.5 shrink-0"
+        />
+        <div className="min-w-0">
+          <p className="text-sm font-semibold">
+            This app&apos;s pricing logic lives in a visual Leapter blueprint
+          </p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Change any input to see the price update. The logic panel will
+            open automatically to turn the calculation logic into a glass box.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AutoRevealLogic({ trigger }: { trigger: boolean }) {
+  const ctx = useGlassContext();
+  const fired = useRef(false);
+  useEffect(() => {
+    if (trigger && !fired.current && ctx) {
+      fired.current = true;
+      ctx.openLogic();
+    }
+  }, [trigger, ctx]);
+  return null;
+}
+
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function PizzaPricingPage() {
@@ -793,6 +841,7 @@ export default function PizzaPricingPage() {
   >();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [userInteracted, setUserInteracted] = useState(false);
   const requestSeq = useRef(0);
 
   const form = useForm<FormValues>({
@@ -859,12 +908,15 @@ export default function PizzaPricingPage() {
       accentColor={project.accentColor}
       run={{
         runId,
-        modelId,
+        modelId: modelId ?? project.modelId,
         traceData,
         inputData: submittedInput,
         outputData: result as unknown as Record<string, unknown> | undefined,
       }}
     >
+      <AutoRevealLogic trigger={userInteracted} />
+      <IntroBanner visible={!userInteracted} />
+
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
@@ -883,7 +935,7 @@ export default function PizzaPricingPage() {
           </div>
           <p className="text-muted-foreground mt-1">
             Pick a size, add toppings, choose a crust — the price updates
-            automatically with today's day-of-week pricing applied.
+            automatically with today&apos;s day-of-week pricing applied.
           </p>
         </div>
         <GlassMode.Toggle />
@@ -921,9 +973,10 @@ export default function PizzaPricingPage() {
           <CardContent>
             <PizzaSizeSelector
               value={pizzaSize}
-              onChange={(v) =>
-                form.setValue("pizzaSize", v, { shouldValidate: true })
-              }
+              onChange={(v) => {
+                setUserInteracted(true);
+                form.setValue("pizzaSize", v, { shouldValidate: true });
+              }}
             />
             {form.formState.errors.pizzaSize && (
               <p className="mt-3 text-sm text-destructive">
@@ -954,9 +1007,10 @@ export default function PizzaPricingPage() {
           <CardContent>
             <ToppingSelector
               value={toppings}
-              onChange={(v) =>
-                form.setValue("toppings", v, { shouldValidate: true })
-              }
+              onChange={(v) => {
+                setUserInteracted(true);
+                form.setValue("toppings", v, { shouldValidate: true });
+              }}
             />
           </CardContent>
         </Card>
@@ -982,9 +1036,10 @@ export default function PizzaPricingPage() {
           <CardContent>
             <CrustSelector
               value={crustType}
-              onChange={(v) =>
-                form.setValue("crustType", v, { shouldValidate: true })
-              }
+              onChange={(v) => {
+                setUserInteracted(true);
+                form.setValue("crustType", v, { shouldValidate: true });
+              }}
             />
             {form.formState.errors.crustType && (
               <p className="mt-3 text-sm text-destructive">
