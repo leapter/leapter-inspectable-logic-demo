@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Workflow } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
+import { PanelRight, PanelRightClose } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/lib/use-media-query";
 import { LogicReplayPanel } from "@/components/logic-replay-panel";
@@ -17,10 +17,6 @@ const SPLIT_MIN = 30;
 const SPLIT_MAX = 80;
 const SPLIT_DEFAULT = 50;
 
-/**
- * Enabled-mode root: owns state, split-pane layout, right-column replay panel,
- * and context provider. Only loaded when `NEXT_PUBLIC_LEAPTER_DEV_MODE=true`.
- */
 export function GlassModeImpl({
   children,
   projectSlug,
@@ -34,18 +30,12 @@ export function GlassModeImpl({
   run: GlassRun;
   accentColor?: string;
 }) {
-  const [debugMode, setDebugMode] = useState(true);
   const [showLogic, setShowLogic] = useState(false);
-  const [logicEverOpened, setLogicEverOpened] = useState(false);
   const isWide = useMediaQuery("(min-width: 1024px)");
   const isRemote = useRuntimeStore(
     (s) => s.configs[projectSlug]?.mode === "remote",
   );
 
-  // Remote runtimes can't drive the local replay panel, so we derive the
-  // effective state here rather than mutating `showLogic`. If the user
-  // flips to remote while the split was open, the effective state collapses
-  // without losing the underlying preference when they flip back to local.
   const effectiveShowLogic = showLogic && !isRemote;
 
   const [leftWidthPct, setLeftWidthPct] = useState(SPLIT_DEFAULT);
@@ -93,15 +83,21 @@ export function GlassModeImpl({
     [],
   );
 
-  const toggleDebug = () => {
-    setDebugMode((prev) => {
-      const next = !prev;
-      if (!next) setShowLogic(false);
-      return next;
-    });
+  const toggleLogic = () => {
+    if (isRemote && !showLogic) {
+      if (!run.runId || !run.modelId) return;
+      const url = buildTraceUrl(
+        projectSlug,
+        run.runId,
+        run.modelId,
+        localProjectId,
+      );
+      if (url) window.open(url, "_blank", "noopener,noreferrer");
+      return;
+    }
+    setShowLogic((prev) => !prev);
   };
   const openLogic = () => {
-    setLogicEverOpened(true);
     if (isRemote) {
       if (!run.runId || !run.modelId) return;
       const url = buildTraceUrl(
@@ -130,12 +126,10 @@ export function GlassModeImpl({
         projectSlug,
         localProjectId,
         run,
-        debugMode,
-        toggleDebug,
         showLogic: effectiveShowLogic,
+        toggleLogic,
         openLogic,
         closeLogic,
-        logicEverOpened,
         isWide,
         isRemote,
       }}
@@ -148,8 +142,6 @@ export function GlassModeImpl({
           isResizing && "select-none",
         )}
       >
-        {/* Left column: the app's content. Width is user-controlled when
-            the split is open; animates to full width when closed. */}
         <div
           className={cn(
             "relative z-20 h-full overflow-y-auto scrollbar-subtle",
@@ -162,7 +154,6 @@ export function GlassModeImpl({
           </div>
         </div>
 
-        {/* Draggable divider — only while the split is open. */}
         {splitOpen && (
           <div
             role="separator"
@@ -182,12 +173,10 @@ export function GlassModeImpl({
               "focus-visible:ring-2 focus-visible:ring-[color:var(--app-accent)]",
             )}
           >
-            {/* Enlarged hit target for easier grabbing */}
             <span
               aria-hidden
               className="absolute inset-y-0 -left-2 -right-2"
             />
-            {/* Visible grip */}
             <span
               aria-hidden
               className={cn(
@@ -201,16 +190,7 @@ export function GlassModeImpl({
           </div>
         )}
 
-        {/* Right column: replay panel (wide viewports, local runtime only).
-            Always mounted in debug mode with width 0 when closed so it
-            pre-warms the viewer. Remote runs open in Lab instead.
-
-            The outer div animates its width during open/close/resize; the
-            inner content stays pinned to its target width in viewport units
-            so the logic viewer (which lays out on every ResizeObserver tick)
-            never sees a mid-transition width. Overflow-hidden clips the
-            overhang while the outer is narrower than the inner. */}
-        {debugMode && isWide && !isRemote && (
+        {isWide && !isRemote && (
           <div
             className={cn(
               "h-full flex overflow-hidden shrink-0",
@@ -241,48 +221,42 @@ export function GlassModeImpl({
   );
 }
 
-/**
- * Toggle button rendered in the app's header. Switches Glass Mode on and off
- * at runtime (for demo/screenshot purposes). Only rendered when the feature
- * flag is enabled at build time.
- */
 export function GlassModeToggleImpl() {
   const ctx = useGlassContext();
   if (!ctx) return null;
-  const { debugMode, toggleDebug } = ctx;
+  const { showLogic, toggleLogic } = ctx;
   return (
     <button
       type="button"
-      onClick={toggleDebug}
-      aria-pressed={debugMode}
-      title={debugMode ? "Turn off Glass Mode" : "Turn on Glass Mode"}
+      onClick={toggleLogic}
+      aria-pressed={showLogic}
+      title={showLogic ? "Hide the logic behind this app" : "Show the logic behind this app"}
       className={cn(
         "shrink-0 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium",
         "transition-all duration-200 outline-none",
         "focus-visible:ring-2 focus-visible:ring-[color:var(--app-accent)] focus-visible:ring-offset-2",
-        debugMode
-          ? "border-transparent text-white shadow-sm"
-          : "border-border bg-background text-muted-foreground hover:text-foreground hover:border-foreground/30",
+        showLogic
+          ? "border-border bg-background text-muted-foreground hover:text-foreground hover:border-foreground/30"
+          : "border-transparent text-white shadow-sm",
       )}
       style={
-        debugMode
-          ? {
+        showLogic
+          ? undefined
+          : {
               background: "linear-gradient(135deg, #FA4B00 0%, #968DF6 100%)",
             }
-          : undefined
       }
     >
-      <Workflow className="h-3.5 w-3.5" />
-      Glass Mode
+      {showLogic ? (
+        <PanelRightClose className="h-3.5 w-3.5" />
+      ) : (
+        <PanelRight className="h-3.5 w-3.5" />
+      )}
+      {showLogic ? "Hide Logic" : "Show Logic"}
     </button>
   );
 }
 
-/**
- * Wraps the result. When Glass Mode is active: renders a DebugPortal around
- * children (clicking it opens the replay), plus an inline replay panel above
- * on narrow viewports. When inactive: passes children through unchanged.
- */
 export function GlassModeResultImpl({
   children,
 }: {
@@ -291,26 +265,11 @@ export function GlassModeResultImpl({
   const ctx = useGlassContext();
   const inlinePanelRef = useRef<HTMLDivElement>(null);
 
-  // When the inline (narrow) panel opens, scroll it into view so the user
-  // sees the reveal instead of wondering whether the click did anything.
-  useEffect(() => {
-    if (!ctx || !ctx.showLogic || ctx.isWide) return;
-    const t = setTimeout(() => {
-      inlinePanelRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-    }, 50);
-    return () => clearTimeout(t);
-  }, [ctx]);
-
   if (!ctx) return <>{children}</>;
   const {
-    debugMode,
     showLogic,
     openLogic,
     closeLogic,
-    logicEverOpened,
     isWide,
     isRemote,
     projectSlug,
@@ -320,7 +279,7 @@ export function GlassModeResultImpl({
 
   return (
     <>
-      {debugMode && !isWide && !isRemote && (
+      {!isWide && !isRemote && (
         <div
           ref={inlinePanelRef}
           aria-hidden={!showLogic}
@@ -345,17 +304,12 @@ export function GlassModeResultImpl({
         </div>
       )}
 
-      {debugMode ? (
-        <DebugPortal
-          onAudit={openLogic}
-          active={showLogic}
-          firstTime={!logicEverOpened}
-        >
-          {children}
-        </DebugPortal>
-      ) : (
-        children
-      )}
+      <DebugPortal
+        onAudit={openLogic}
+        active={showLogic}
+      >
+        {children}
+      </DebugPortal>
     </>
   );
 }

@@ -1093,7 +1093,7 @@ export function GuidedDemo() {
       accentColor={project.accentColor}
       run={{
         runId,
-        modelId,
+        modelId: modelId ?? project.modelId,
         traceData,
         inputData: submittedInput,
         outputData: result as unknown as Record<string, unknown> | undefined,

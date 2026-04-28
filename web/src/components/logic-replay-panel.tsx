@@ -161,7 +161,7 @@ export function LogicReplayPanel({
           </div>
         )}
 
-        {!hasRun && !loading && !loadError && (
+        {!modelId && !loading && !loadError && (
           <div className="absolute inset-0 flex items-center justify-center p-6">
             <p className="text-sm text-muted-foreground max-w-sm text-center">
               Fill in the form and calculate a premium — the diagram will load here with the executed path highlighted.
@@ -178,7 +178,7 @@ export function LogicReplayPanel({
           </div>
         )}
 
-        {viewerReady && modelJson && traceAttr && (
+        {viewerReady && modelJson && (
           <div
             className="absolute inset-0 transition-[opacity,transform] duration-[220ms] ease-out will-change-[opacity,transform]"
             style={{
@@ -186,7 +186,7 @@ export function LogicReplayPanel({
               transform: fading ? "scale(0.995)" : "scale(1)",
             }}
           >
-            <LogicViewerEmbed modelJson={modelJson} traceJson={traceAttr} />
+            <LogicViewerEmbed modelJson={modelJson} traceJson={traceAttr ?? undefined} />
           </div>
         )}
       </div>

@@ -4,21 +4,14 @@ import Image from "next/image";
 import { Workflow } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/**
- * Wraps its children in a coral→purple glass border with an elevated
- * shadow and a "See how this was calculated →" hint. Pressing anywhere
- * in the wrapper fires `onAudit` to reveal the logic panel.
- */
 export function DebugPortal({
   children,
   onAudit,
   active,
-  firstTime,
 }: {
   children: React.ReactNode;
   onAudit: () => void;
   active: boolean;
-  firstTime: boolean;
 }) {
   const pressable = !active;
 
@@ -102,13 +95,7 @@ export function DebugPortal({
           {children}
 
           {pressable && (
-            <div
-              className={cn(
-                "flex justify-center pt-1",
-                firstTime &&
-                  "animate-in fade-in slide-in-from-bottom-1 duration-700 delay-500",
-              )}
-            >
+            <div className="flex justify-center pt-1">
               <span
                 className={cn(
                   "inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5",

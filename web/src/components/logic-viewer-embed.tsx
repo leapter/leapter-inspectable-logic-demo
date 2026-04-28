@@ -18,7 +18,7 @@ export function LogicViewerEmbed({
   /** Base64-encoded model JSON */
   modelJson: string;
   /** Base64-encoded ModelInvocation JSON */
-  traceJson: string;
+  traceJson?: string;
   className?: string;
   /** Hide the left data panel (inputs/outputs). Default: true. */
   hideDataPanel?: boolean;
@@ -39,7 +39,11 @@ export function LogicViewerEmbed({
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    el.setAttribute("trace", traceJson);
+    if (traceJson) {
+      el.setAttribute("trace", traceJson);
+    } else {
+      el.removeAttribute("trace");
+    }
   }, [traceJson]);
 
   useEffect(() => {

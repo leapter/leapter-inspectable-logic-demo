@@ -15,16 +15,11 @@ export interface GlassContextValue {
   projectSlug: string;
   localProjectId?: string;
   run: GlassRun;
-  debugMode: boolean;
-  toggleDebug: () => void;
   showLogic: boolean;
+  toggleLogic: () => void;
   openLogic: () => void;
   closeLogic: () => void;
-  logicEverOpened: boolean;
   isWide: boolean;
-  /** True when the project is configured to talk to a remote runtime.
-   *  Remote mode short-circuits the split-pane replay and opens the run
-   *  in Leapter Lab instead. */
   isRemote: boolean;
 }
 
