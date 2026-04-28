@@ -259,7 +259,7 @@ cd leapter
 Open VS Code with the Leapter Blueprint viewer:
 
 ```bash
-pnpm code:open
+pnpm vscode
 ```
 
 This installs the bundled VS Code extension from `.leapter-tools/leapter-blueprint-viewer.vsix` and opens the workspace. Open a `.logic.vts` file to see the visual Blueprint representation next to the text source.
