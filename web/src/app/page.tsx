@@ -1,160 +1,54 @@
 import Image from "next/image";
-import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { GuidedDemo } from "@/modules/guided-demo";
 
 export default function Home() {
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-lg">
-        <div className="container mx-auto flex h-16 items-center justify-between px-6">
-          <Link href="/" className="flex items-center gap-2">
+    <div className="flex flex-col h-screen bg-background">
+      <header className="shrink-0 border-b border-border/40 bg-background/80 backdrop-blur-lg">
+        <div className="container mx-auto flex h-14 items-center justify-between px-6">
+          <div className="flex items-center gap-3">
             <Image
               src="/leapter-logo-full.svg"
               alt="Leapter"
               width={902}
               height={259}
-              className="h-auto w-[110px]"
+              className="h-auto w-[100px]"
               priority
             />
-          </Link>
-          <nav className="flex items-center gap-6">
-            <Link
-              href="/calculator"
-              className={buttonVariants({
-                variant: "default",
-                size: "lg",
-              })}
+            <span className="text-xs font-medium text-muted-foreground border-l border-border/60 pl-3">
+              Starter
+            </span>
+          </div>
+          <nav className="flex items-center gap-3">
+            <a
+              href="https://leapter.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              Open App
-            </Link>
+              leapter.com
+            </a>
+            <a
+              href="https://github.com/leapter/leapter-starter-nextjs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+            >
+              <svg
+                viewBox="0 0 16 16"
+                fill="currentColor"
+                className="h-3.5 w-3.5"
+              >
+                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
+              </svg>
+              GitHub
+            </a>
           </nav>
         </div>
       </header>
-
-      {/* Hero */}
-      <main className="flex-1">
-        <section className="container mx-auto px-6 pt-24 pb-16 text-center">
-          <p className="text-sm font-medium tracking-wider uppercase text-[oklch(0.62_0.21_30)] mb-6">
-            Leapter Starter
-          </p>
-          <h1 className="text-5xl sm:text-7xl font-bold tracking-tight text-foreground mb-8 max-w-4xl mx-auto leading-[1.1]">
-            Your business logic, transparent and auditable
-          </h1>
-          <p className="mx-auto max-w-2xl text-lg text-muted-foreground mb-12 leading-relaxed">
-            Calculations, rules, and validations live in Leapter blueprints —
-            not buried in code. Every decision is traceable, every result
-            explainable.
-          </p>
-          <div className="flex gap-4 justify-center">
-            <Link
-              href="/calculator"
-              className={buttonVariants({
-                size: "lg",
-                className: "px-8 h-12 text-base rounded-full",
-              })}
-            >
-              Try the Demo
-            </Link>
-            <Link
-              href="#how-it-works"
-              className={buttonVariants({
-                variant: "outline",
-                size: "lg",
-                className: "px-8 h-12 text-base rounded-full",
-              })}
-            >
-              How It Works
-            </Link>
-          </div>
-        </section>
-
-        {/* Gradient divider */}
-        <div className="mx-auto max-w-3xl h-px bg-gradient-to-r from-transparent via-[oklch(0.62_0.21_30)/30] to-transparent" />
-
-        {/* How it works */}
-        <section id="how-it-works" className="container mx-auto px-6 py-24">
-          <p className="text-sm font-medium tracking-wider uppercase text-[oklch(0.62_0.21_30)] text-center mb-4">
-            How It Works
-          </p>
-          <h2 className="text-3xl font-bold text-center mb-16 tracking-tight">
-            Logic you can read, results you can trust
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <Card className="border-0 shadow-none bg-muted/50">
-              <CardHeader className="p-8">
-                <div className="w-10 h-10 rounded-full bg-[oklch(0.62_0.21_30)] text-white flex items-center justify-center text-sm font-semibold mb-4">
-                  1
-                </div>
-                <CardTitle className="text-xl mb-2">
-                  Define the Rules
-                </CardTitle>
-                <CardDescription className="text-base leading-relaxed">
-                  Business logic is authored as Leapter blueprints — structured,
-                  versioned, and readable by both engineers and domain experts.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            <Card className="border-0 shadow-none bg-muted/50">
-              <CardHeader className="p-8">
-                <div className="w-10 h-10 rounded-full bg-[oklch(0.65_0.17_290)] text-white flex items-center justify-center text-sm font-semibold mb-4">
-                  2
-                </div>
-                <CardTitle className="text-xl mb-2">
-                  Run Transparently
-                </CardTitle>
-                <CardDescription className="text-base leading-relaxed">
-                  When a user submits data, the blueprint executes — no hidden
-                  formulas, no black-box models. Every step is traceable.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            <Card className="border-0 shadow-none bg-muted/50">
-              <CardHeader className="p-8">
-                <div className="w-10 h-10 rounded-full bg-[oklch(0.65_0.17_155)] text-white flex items-center justify-center text-sm font-semibold mb-4">
-                  3
-                </div>
-                <CardTitle className="text-xl mb-2">
-                  Explain the Result
-                </CardTitle>
-                <CardDescription className="text-base leading-relaxed">
-                  Results come with full breakdowns — see exactly which rules
-                  fired, which inputs mattered, and why the output is what it
-                  is.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-        </section>
+      <main className="flex-1 min-h-0 flex flex-col">
+        <GuidedDemo />
       </main>
-
-      {/* Footer */}
-      <footer className="border-t border-border/40 py-8">
-        <div className="container mx-auto px-6 flex items-center justify-between">
-          <Image
-            src="/leapter-logo-icon.svg"
-            alt="Leapter"
-            width={28}
-            height={28}
-            className="opacity-50"
-          />
-          <p className="text-sm text-muted-foreground">
-            Powered by{" "}
-            <a
-              href="https://leapter.com"
-              className="font-medium text-foreground hover:text-[oklch(0.62_0.21_30)] transition-colors"
-            >
-              Leapter
-            </a>
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }

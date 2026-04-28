@@ -542,7 +542,7 @@ export function LeapterDevtools() {
 
           {/* Footer */}
           <div className="px-3 py-2 border-t border-zinc-800 text-[10px] text-zinc-600 flex justify-between">
-            <span>NEXT_PUBLIC_LEAPTER_DEBUG=true</span>
+            <span>NEXT_PUBLIC_LEAPTER_DEV_MODE=true</span>
             <span>localStorage</span>
           </div>
         </div>

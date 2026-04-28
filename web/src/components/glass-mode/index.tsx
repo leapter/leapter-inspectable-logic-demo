@@ -14,7 +14,7 @@ export type { GlassRun } from "./context";
  * `DebugPortal`, `LogicReplayPanel`, and viewer dependencies) is dead code
  * and never shipped.
  */
-const DEBUG_ENABLED = process.env.NEXT_PUBLIC_LEAPTER_DEBUG === "true";
+const DEV_MODE = process.env.NEXT_PUBLIC_LEAPTER_DEV_MODE !== "false";
 
 type GlassModeProps = {
   children: React.ReactNode;
@@ -25,20 +25,20 @@ type GlassModeProps = {
 };
 type GlassModeResultProps = { children: React.ReactNode };
 
-const GlassModeImpl: ComponentType<GlassModeProps> | null = DEBUG_ENABLED
+const GlassModeImpl: ComponentType<GlassModeProps> | null = DEV_MODE
   ? dynamic(() => import("./impl").then((m) => m.GlassModeImpl), {
       ssr: false,
     })
   : null;
 
-const GlassModeToggleImpl: ComponentType | null = DEBUG_ENABLED
+const GlassModeToggleImpl: ComponentType | null = DEV_MODE
   ? dynamic(() => import("./impl").then((m) => m.GlassModeToggleImpl), {
       ssr: false,
     })
   : null;
 
 const GlassModeResultImpl: ComponentType<GlassModeResultProps> | null =
-  DEBUG_ENABLED
+  DEV_MODE
     ? dynamic(() => import("./impl").then((m) => m.GlassModeResultImpl), {
         ssr: false,
       })

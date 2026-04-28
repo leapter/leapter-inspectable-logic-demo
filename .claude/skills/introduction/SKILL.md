@@ -44,7 +44,7 @@ If `web/.env.local` does **not** exist, run the init script to create it:
 - **Windows:** `init.cmd`
 
 The script copies `web/.env.example` → `web/.env.local` with the local runtime URL
-(`localhost:4004`) enabled and Leapter debug mode (`NEXT_PUBLIC_LEAPTER_DEBUG=true`) on.
+(`localhost:4004`) enabled and Leapter debug mode (`NEXT_PUBLIC_LEAPTER_DEV_MODE=true`) on.
 
 If the init script itself is missing, create `web/.env.local` manually:
 
@@ -55,7 +55,7 @@ cp web/.env.example web/.env.local
 Then ensure these values are set:
 ```
 LEAPTER_RUNTIME_URL=http://localhost:4004/api/v1/_/_
-NEXT_PUBLIC_LEAPTER_DEBUG=true
+NEXT_PUBLIC_LEAPTER_DEV_MODE=true
 ```
 
 Report the result in the Tooling Health section (Phase 3).

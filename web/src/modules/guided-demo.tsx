@@ -653,7 +653,7 @@ function ScenarioSwitcher({
 
 // ─── Main Demo Page ───────────────────────────────────────────────────────────
 
-export default function DemoPage() {
+export function GuidedDemo() {
   const [result, setResult] = useState<PremiumResult | null>(null);
   const [runId, setRunId] = useState<string | undefined>();
   const [modelId, setModelId] = useState<string | undefined>();
@@ -770,7 +770,8 @@ export default function DemoPage() {
             Insurance Premium Calculator
           </h1>
           <p className="text-muted-foreground mt-1">
-            A working app built by AI — with verifiable business logic.
+            An example app included with the Leapter Starter — business logic
+            lives in a blueprint, not in code.
           </p>
         </div>
         <GlassMode.Toggle />

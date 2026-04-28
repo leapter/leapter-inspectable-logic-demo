@@ -30,4 +30,4 @@ rem Copy example and replace the commented runtime URL with the local dev one
     )
 ) > "%ENV_LOCAL%"
 
-echo Created web\.env.local (debug mode enabled, local runtime at :4004)
+echo Created web\.env.local (local runtime at :4004)
