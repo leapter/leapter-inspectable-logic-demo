@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   description: "Calculate pizza prices by size, toppings, and crust — powered by Leapter",
 };
 
-const showDevtools = process.env.NEXT_PUBLIC_LEAPTER_DEBUG === "true";
+const devMode = process.env.NEXT_PUBLIC_LEAPTER_DEV_MODE !== "false";
 
 export default function RootLayout({
   children,
@@ -36,7 +36,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         {children}
         <Toaster />
-        {showDevtools && <LeapterDevtools />}
+        {devMode && <LeapterDevtools />}
       </body>
     </html>
   );

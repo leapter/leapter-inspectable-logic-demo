@@ -282,12 +282,12 @@ the inline replay panel on narrow viewports, and the right-column replay on
 wide viewports. The app supplies `run` (runId + modelId + traceData + input +
 output from the latest execution) and lays out its own content.
 
-**Disabling for production.** Glass Mode is gated by `NEXT_PUBLIC_LEAPTER_DEBUG`
-at build time. When the flag is unset, `<GlassMode>` is a pass-through
-(renders a plain scrollable container), `<GlassMode.Toggle>` renders `null`,
-`<GlassMode.Result>` renders its children unchanged, and the heavy impl chunk
-(DebugPortal, LogicReplayPanel, viewer deps) is not shipped. Same source
-works in dev and prod — no conditional rendering in app code.
+**Disabling for production.** Glass Mode is **enabled by default**. To disable it,
+set `NEXT_PUBLIC_LEAPTER_DEV_MODE=false` at build time. When disabled, `<GlassMode>`
+is a pass-through (renders a plain scrollable container), `<GlassMode.Toggle>`
+renders `null`, `<GlassMode.Result>` renders its children unchanged, and the
+heavy impl chunk (DebugPortal, LogicReplayPanel, viewer deps) is not shipped.
+Same source works in dev and prod — no conditional rendering in app code.
 
 ### 4. Test locally
 ```bash

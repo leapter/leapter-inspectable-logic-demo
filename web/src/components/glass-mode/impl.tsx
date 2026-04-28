@@ -19,7 +19,7 @@ const SPLIT_DEFAULT = 50;
 
 /**
  * Enabled-mode root: owns state, split-pane layout, right-column replay panel,
- * and context provider. Only loaded when `NEXT_PUBLIC_LEAPTER_DEBUG=true`.
+ * and context provider. Only loaded when `NEXT_PUBLIC_LEAPTER_DEV_MODE=true`.
  */
 export function GlassModeImpl({
   children,

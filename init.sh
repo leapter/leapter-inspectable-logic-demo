@@ -19,9 +19,4 @@ cp "$ENV_EXAMPLE" "$ENV_LOCAL"
 sed -i.bak 's|^# LEAPTER_RUNTIME_URL=.*|LEAPTER_RUNTIME_URL=http://localhost:4004/api/v1/_/_|' "$ENV_LOCAL"
 rm -f "$ENV_LOCAL.bak"
 
-# Ensure debug mode is on
-if ! grep -q '^NEXT_PUBLIC_LEAPTER_DEBUG=true' "$ENV_LOCAL"; then
-  echo 'NEXT_PUBLIC_LEAPTER_DEBUG=true' >> "$ENV_LOCAL"
-fi
-
-echo "Created web/.env.local (debug mode enabled, local runtime at :4004)"
+echo "Created web/.env.local (local runtime at :4004)"
