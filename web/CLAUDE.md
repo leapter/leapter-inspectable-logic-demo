@@ -136,7 +136,7 @@ setTimeout(() => {
 ### Accessibility
 
 - All interactive elements must be keyboard-navigable (Tab, Enter, Space).
-- Selection cards (vehicle type, coverage level) must use `button` elements or
+- Selection cards (size, crust, topping) must use `button` elements or
   have proper ARIA roles — not bare `div` with `onClick`.
 - Color must not be the only indicator — pair with icons, text, or patterns.
 - Form labels must be associated with their inputs (`htmlFor` / `id`).
@@ -167,7 +167,7 @@ setTimeout(() => {
 - Use shadcn/ui primitives — don't install competing component libraries.
 - Install additional shadcn components as needed: `pnpm dlx shadcn@latest add <name>`
 - Check if shadcn/ui already has the component before installing anything else.
-- Compose domain-specific components from primitives (e.g., `CoverageLevelSelector`
+- Compose domain-specific components from primitives (e.g., `ToppingSelector`
   built from `Card` + `Badge` + `Button`).
 - Keep components focused — one file per concern, not monolithic page components.
 
@@ -186,8 +186,8 @@ selections.
 
    ```ts
    export const projectConfig = {
-     slug: "insurance-premium-calculation",
-     accentColor: "oklch(0.55 0.18 250)", // saturated blue
+     slug: "pizza-pricing",
+     accentColor: "oklch(0.62 0.21 35)", // warm orange
      ...
    };
    ```

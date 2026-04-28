@@ -1,12 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Pie, PieChart, Cell, Label as PieLabel } from "recharts";
+import { Pie, PieChart, Cell, Label } from "recharts";
 import { executeBlueprint } from "@/app/actions/blueprint";
 import { getClientConfig } from "@/lib/runtime-config";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -14,9 +13,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Label as FieldLabel } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
   ChartContainer,
@@ -31,13 +29,10 @@ import {
   Calendar,
   CalendarDays,
   Check,
-  Workflow,
-  Play,
-  ArrowRight,
-  RotateCcw,
-  CheckCircle,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BlueprintStatus } from "@/components/blueprint-status";
 import { GlassMode } from "@/components/glass-mode";
 import type { TraceData } from "@leapter/client";
 import { projectConfig } from "@/lib/project";
@@ -50,7 +45,7 @@ import {
   TOPPINGS,
   TOPPING_PRICE,
   getTodayDayOfWeek,
-} from "@/modules/pizza-pricing/schema";
+} from "./schema";
 
 const project = projectConfig;
 
@@ -71,6 +66,7 @@ function formatSignedCurrency(value: number) {
   return `${sign}${formatCurrency(Math.abs(value))}`;
 }
 
+// Day metadata kept in one place so the selector and comparison stay in sync.
 const DAY_INFO: Record<
   DayOfWeek,
   { short: string; long: string; multiplier: number; tag?: string }
@@ -83,66 +79,6 @@ const DAY_INFO: Record<
   saturday: { short: "Sat", long: "Saturday", multiplier: 1.15, tag: "+15%" },
   sunday: { short: "Sun", long: "Sunday", multiplier: 1.0 },
 };
-
-// ─── Preset Scenarios ──────────────────────────────────────────────────────────
-
-type ScenarioId = "pizza-tuesday" | "weekend-feast" | "plain-margherita";
-
-interface Scenario {
-  id: ScenarioId;
-  label: string;
-  description: string;
-  highlight: string;
-  values: Omit<FormValues, "dayOfWeek">;
-}
-
-// Day is fixed to today across scenarios (the calculator no longer lets the
-// user change the day, so the demo also stays anchored to today).
-const scenarios: Scenario[] = [
-  {
-    id: "pizza-tuesday",
-    label: "Pizza Tuesday Sweet Spot",
-    description:
-      "Large + 4 toppings + stuffed crust — both the size base and the day discount fire.",
-    highlight: "Day discount + crust upcharge",
-    values: {
-      pizzaSize: "large",
-      toppings: ["tomato", "mushroom", "bacon", "prosciutto"],
-      crustType: "stuffed",
-    },
-  },
-  {
-    id: "weekend-feast",
-    label: "Weekend Family Feast",
-    description:
-      "Large + 6 toppings + regular crust — see how the toppings stack and the weekend premium applies.",
-    highlight: "Toppings stack + premium",
-    values: {
-      pizzaSize: "large",
-      toppings: [
-        "tomato",
-        "mushroom",
-        "olive",
-        "bell-pepper",
-        "mozzarella",
-        "shrimp",
-      ],
-      crustType: "regular",
-    },
-  },
-  {
-    id: "plain-margherita",
-    label: "Plain Margherita",
-    description:
-      "Small + 1 topping + thin crust — the minimal path through the pricing logic.",
-    highlight: "Minimum path through rules",
-    values: {
-      pizzaSize: "small",
-      toppings: ["tomato"],
-      crustType: "thin",
-    },
-  },
-];
 
 // ─── Pizza Size Selector ───────────────────────────────────────────────────────
 
@@ -185,13 +121,16 @@ function PizzaSizeSelector({
             }
           >
             <div
-              className="rounded-full transition-all flex items-center justify-center"
+              className="rounded-full transition-all"
               style={{
                 width: size.ringSize,
                 height: size.ringSize,
                 background: selected
                   ? "color-mix(in oklch, var(--app-accent) 18%, transparent)"
                   : "color-mix(in oklch, var(--muted-foreground) 12%, transparent)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
               <Pizza
@@ -246,7 +185,7 @@ function ToppingSelector({
   return (
     <div className="space-y-3">
       <div className="flex items-baseline justify-between">
-        <Label>Toppings</Label>
+        <FieldLabel>Toppings</FieldLabel>
         <span className="text-sm tabular-nums text-muted-foreground">
           {value.length === 0 ? (
             "None selected"
@@ -315,9 +254,27 @@ function ToppingSelector({
 // ─── Crust Selector ────────────────────────────────────────────────────────────
 
 const crusts = [
-  { value: "thin", label: "Thin", description: "Crispy and light", upcharge: 0, icon: Layers },
-  { value: "regular", label: "Regular", description: "Classic hand-tossed", upcharge: 0, icon: Pizza },
-  { value: "stuffed", label: "Stuffed", description: "Cheese-filled edge", upcharge: 3, icon: Sparkles },
+  {
+    value: "thin",
+    label: "Thin",
+    description: "Crispy and light",
+    upcharge: 0,
+    icon: Layers,
+  },
+  {
+    value: "regular",
+    label: "Regular",
+    description: "Classic hand-tossed",
+    upcharge: 0,
+    icon: Pizza,
+  },
+  {
+    value: "stuffed",
+    label: "Stuffed",
+    description: "Cheese-filled edge",
+    upcharge: 3,
+    icon: Sparkles,
+  },
 ] as const;
 
 function CrustSelector({
@@ -355,7 +312,10 @@ function CrustSelector({
           >
             <div className="flex w-full items-start justify-between gap-2">
               <Icon
-                className={cn("h-5 w-5", !selected && "text-muted-foreground")}
+                className={cn(
+                  "h-5 w-5",
+                  !selected && "text-muted-foreground",
+                )}
                 style={selected ? { color: "var(--app-accent)" } : undefined}
               />
               {crust.upcharge > 0 ? (
@@ -488,7 +448,13 @@ function TotalHeroCard({
               <span className="font-semibold text-foreground">
                 {formatCurrency(Math.abs(delta))}
               </span>{" "}
-              vs. regular price{dayInfo.tag && <> ({dayInfo.tag})</>}
+              vs. regular price
+              {dayInfo.tag && (
+                <>
+                  {" "}
+                  ({dayInfo.tag})
+                </>
+              )}
             </p>
           ) : (
             <p className="mt-1 text-muted-foreground">final price</p>
@@ -496,45 +462,6 @@ function TotalHeroCard({
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-function BreakdownRow({
-  color,
-  label,
-  value,
-  total,
-  mutedWhenZero,
-}: {
-  color: string;
-  label: string;
-  value: number;
-  total: number;
-  mutedWhenZero?: boolean;
-}) {
-  const muted = mutedWhenZero && value === 0;
-  const pct = total > 0 ? (value / total) * 100 : 0;
-  return (
-    <div
-      className={cn(
-        "flex items-center justify-between gap-3",
-        muted && "text-muted-foreground",
-      )}
-    >
-      <div className="flex items-center gap-2 min-w-0">
-        <span
-          className="h-2.5 w-2.5 rounded-sm shrink-0"
-          style={{ backgroundColor: color, opacity: muted ? 0.4 : 1 }}
-        />
-        <span className="truncate">{label}</span>
-      </div>
-      <div className="flex items-baseline gap-2 tabular-nums">
-        <span className="text-xs text-muted-foreground">
-          {pct.toFixed(0)}%
-        </span>
-        <span className="font-medium">{formatCurrency(value)}</span>
-      </div>
-    </div>
   );
 }
 
@@ -593,7 +520,7 @@ function BreakdownChart({ data }: { data: PizzaResult }) {
               {chartData.map((entry) => (
                 <Cell key={entry.key} fill={entry.fill} />
               ))}
-              <PieLabel
+              <Label
                 content={({ viewBox }) => {
                   if (
                     !viewBox ||
@@ -664,6 +591,45 @@ function BreakdownChart({ data }: { data: PizzaResult }) {
   );
 }
 
+function BreakdownRow({
+  color,
+  label,
+  value,
+  total,
+  mutedWhenZero,
+}: {
+  color: string;
+  label: string;
+  value: number;
+  total: number;
+  mutedWhenZero?: boolean;
+}) {
+  const muted = mutedWhenZero && value === 0;
+  const pct = total > 0 ? (value / total) * 100 : 0;
+  return (
+    <div
+      className={cn(
+        "flex items-center justify-between gap-3",
+        muted && "text-muted-foreground",
+      )}
+    >
+      <div className="flex items-center gap-2 min-w-0">
+        <span
+          className="h-2.5 w-2.5 rounded-sm shrink-0"
+          style={{ backgroundColor: color, opacity: muted ? 0.4 : 1 }}
+        />
+        <span className="truncate">{label}</span>
+      </div>
+      <div className="flex items-baseline gap-2 tabular-nums">
+        <span className="text-xs text-muted-foreground">
+          {pct.toFixed(0)}%
+        </span>
+        <span className="font-medium">{formatCurrency(value)}</span>
+      </div>
+    </div>
+  );
+}
+
 function WeeklyComparison({
   data,
   pickedDay,
@@ -721,7 +687,9 @@ function WeeklyComparison({
                   <span
                     className={cn(
                       "text-sm font-medium",
-                      isActive ? "text-foreground" : "text-muted-foreground",
+                      isActive
+                        ? "text-foreground"
+                        : "text-muted-foreground",
                     )}
                   >
                     {info.short}
@@ -730,10 +698,9 @@ function WeeklyComparison({
                     <span
                       className="rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none"
                       style={{
-                        color:
-                          info.multiplier < 1
-                            ? "var(--chart-2)"
-                            : "var(--app-accent)",
+                        color: info.multiplier < 1
+                          ? "var(--chart-2)"
+                          : "var(--app-accent)",
                         opacity: 0.9,
                       }}
                     >
@@ -811,186 +778,10 @@ function PizzaResults({
   );
 }
 
-// ─── Demo Banner ───────────────────────────────────────────────────────────────
+// ─── Main Page ─────────────────────────────────────────────────────────────────
 
-function DemoBanner({
-  phase,
-  onAutoRun,
-  loading,
-}: {
-  phase: "start" | "form-ready" | "result-shown" | "glass-open";
-  onAutoRun: () => void;
-  loading: boolean;
-}) {
-  return (
-    <div
-      className="rounded-xl border p-4 sm:p-5"
-      style={{
-        borderColor:
-          "color-mix(in oklch, #FA4B00 20%, color-mix(in oklch, #968DF6 20%, transparent))",
-        background:
-          "linear-gradient(135deg, color-mix(in oklch, #FA4B00 4%, var(--background)) 0%, color-mix(in oklch, #968DF6 4%, var(--background)) 100%)",
-      }}
-    >
-      <div className="flex items-start gap-4">
-        <div
-          className="shrink-0 mt-0.5 flex h-9 w-9 items-center justify-center rounded-full"
-          style={{
-            background: "linear-gradient(135deg, #FA4B00 0%, #968DF6 100%)",
-          }}
-        >
-          <Workflow className="h-4.5 w-4.5 text-white" />
-        </div>
-        <div className="flex-1 min-w-0">
-          {phase === "start" && (
-            <>
-              <p className="font-semibold text-sm">
-                What if you could verify AI-generated logic — without reading
-                code?
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                This pizza pricing calculator was built by AI. The form below
-                collects inputs, and a Leapter blueprint computes the price.
-                Hit{" "}
-                <strong className="text-foreground">Calculate Price</strong>{" "}
-                and then click the result to see every rule that fired — step
-                by step.
-              </p>
-              <button
-                type="button"
-                onClick={onAutoRun}
-                disabled={loading}
-                className={cn(
-                  "mt-3 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-medium transition-all",
-                  "text-white border-transparent",
-                  loading && "opacity-60 cursor-not-allowed",
-                )}
-                style={{
-                  background:
-                    "linear-gradient(135deg, #FA4B00 0%, #968DF6 100%)",
-                }}
-              >
-                <Play className="h-3.5 w-3.5" />
-                {loading ? "Calculating…" : "Run the demo instantly"}
-              </button>
-            </>
-          )}
-          {phase === "form-ready" && (
-            <>
-              <p className="font-semibold text-sm">
-                Form is pre-filled — ready to calculate
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Scroll down and click{" "}
-                <strong className="text-foreground">Calculate Price</strong>{" "}
-                — or tweak the inputs first to see how different values change
-                the result.
-              </p>
-            </>
-          )}
-          {phase === "result-shown" && (
-            <>
-              <p className="font-semibold text-sm flex items-center gap-2">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FA4B00] opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FA4B00]" />
-                </span>
-                Now click the result below to see how it was calculated
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                The coral-purple border is the{" "}
-                <strong className="text-foreground">Glass Mode</strong> portal.
-                Click anywhere inside it to reveal the execution trace — every
-                branch, every variable, step by step.
-              </p>
-            </>
-          )}
-          {phase === "glass-open" && (
-            <>
-              <p className="font-semibold text-sm flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                You&apos;re looking at the execution trace
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                The highlighted path shows exactly which rules fired for this
-                input. Hover over nodes to see variable values at each step.
-                Try a different scenario below — the trace changes because the
-                logic path changes.
-              </p>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Scenario Switcher ─────────────────────────────────────────────────────────
-
-function ScenarioSwitcher({
-  activeId,
-  onSelect,
-  disabled,
-}: {
-  activeId: ScenarioId | null;
-  onSelect: (scenario: Scenario) => void;
-  disabled: boolean;
-}) {
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <RotateCcw className="h-4 w-4 text-muted-foreground" />
-        <p className="text-sm font-medium">Try a different scenario</p>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {scenarios.map((s) => {
-          const active = activeId === s.id;
-          return (
-            <button
-              key={s.id}
-              type="button"
-              disabled={disabled}
-              onClick={() => onSelect(s)}
-              className={cn(
-                "flex flex-col rounded-xl border-2 p-4 text-left transition-all",
-                active
-                  ? "shadow-sm"
-                  : "border-border bg-background hover:bg-muted/50",
-                disabled && "opacity-50 cursor-not-allowed",
-              )}
-              style={
-                active
-                  ? {
-                      borderColor: "var(--app-accent)",
-                      backgroundColor:
-                        "color-mix(in oklch, var(--app-accent) 6%, transparent)",
-                    }
-                  : undefined
-              }
-            >
-              <p
-                className="text-sm font-semibold"
-                style={active ? { color: "var(--app-accent)" } : undefined}
-              >
-                {s.label}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {s.description}
-              </p>
-              <Badge variant="outline" className="mt-2 w-fit text-[10px]">
-                {s.highlight}
-              </Badge>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ─── Main Demo Page ────────────────────────────────────────────────────────────
-
-export function GuidedDemo() {
+export default function PizzaPricingPage() {
+  // Compute today once on mount so the form default is stable across renders.
   const [today] = useState<DayOfWeek>(() => getTodayDayOfWeek());
   const [result, setResult] = useState<PizzaResult | null>(null);
   const [resultDay, setResultDay] = useState<DayOfWeek>(today);
@@ -1002,42 +793,48 @@ export function GuidedDemo() {
   >();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [activeScenario, setActiveScenario] = useState<ScenarioId | null>(
-    "pizza-tuesday",
-  );
-  const [glassAutoOpened, setGlassAutoOpened] = useState(false);
-  const resultRef = useRef<HTMLDivElement>(null);
-
-  const defaultScenario = scenarios[0];
+  const requestSeq = useRef(0);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema) as any,
-    defaultValues: { ...defaultScenario.values, dayOfWeek: today },
+    defaultValues: {
+      pizzaSize: "medium",
+      toppings: ["tomato", "mushroom"],
+      crustType: "regular",
+      dayOfWeek: today,
+    },
   });
 
   const pizzaSize = useWatch({ control: form.control, name: "pizzaSize" });
   const toppings = useWatch({ control: form.control, name: "toppings" });
   const crustType = useWatch({ control: form.control, name: "crustType" });
 
-  const phase: "start" | "form-ready" | "result-shown" | "glass-open" = result
-    ? glassAutoOpened
-      ? "glass-open"
-      : "result-shown"
-    : activeScenario
-      ? "start"
-      : "form-ready";
+  // Auto-recalculate whenever any input changes. Debounced so a flurry of
+  // clicks (e.g. picking several toppings) coalesces into a single request,
+  // and guarded with a sequence counter so a stale response can't overwrite
+  // a newer one.
+  useEffect(() => {
+    if (!pizzaSize || !crustType || !toppings) return;
 
-  const runCalculation = useCallback(
-    async (values: FormValues) => {
+    const values: FormValues = {
+      pizzaSize,
+      toppings,
+      crustType,
+      dayOfWeek: today,
+    };
+
+    const timer = setTimeout(async () => {
+      const seq = ++requestSeq.current;
       setLoading(true);
-      setError(null);
       const override = getClientConfig(project.slug, project.projectId);
       const response = await executeBlueprint(
         project.blueprintSlug,
         values,
         override,
       );
+      if (seq !== requestSeq.current) return;
       if (response.success) {
+        setError(null);
         setRunId(response.runId);
         setModelId(response.modelId);
         setSubmittedInput(values as unknown as Record<string, unknown>);
@@ -1046,43 +843,12 @@ export function GuidedDemo() {
         setTraceData(response.traceData);
       } else {
         setError(response.error);
-        setResult(null);
-        setRunId(undefined);
-        setTraceData(undefined);
-        setSubmittedInput(undefined);
       }
       setLoading(false);
-      setTimeout(() => {
-        resultRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }, 100);
-    },
-    [],
-  );
+    }, 200);
 
-  function onSubmit(values: FormValues) {
-    runCalculation(values);
-  }
-
-  function handleAutoRun() {
-    runCalculation({ ...defaultScenario.values, dayOfWeek: today });
-  }
-
-  function handleScenarioSelect(scenario: Scenario) {
-    setActiveScenario(scenario.id);
-    form.reset({ ...scenario.values, dayOfWeek: today });
-    setResult(null);
-    setGlassAutoOpened(false);
-    runCalculation({ ...scenario.values, dayOfWeek: today });
-  }
-
-  useEffect(() => {
-    if (!result) {
-      setGlassAutoOpened(false);
-    }
-  }, [result]);
+    return () => clearTimeout(timer);
+  }, [pizzaSize, crustType, toppings, today]);
 
   const hasResult = Boolean(result);
 
@@ -1101,28 +867,39 @@ export function GuidedDemo() {
     >
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Pizza Pricing Calculator
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold tracking-tight">
+              Pizza Pricing Calculator
+            </h1>
+            {loading && (
+              <span
+                className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"
+                aria-live="polite"
+              >
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Updating
+              </span>
+            )}
+          </div>
           <p className="text-muted-foreground mt-1">
-            An example app included with the Leapter Starter — business logic
-            lives in a blueprint, not in code.
+            Pick a size, add toppings, choose a crust — the price updates
+            automatically with today's day-of-week pricing applied.
           </p>
         </div>
         <GlassMode.Toggle />
       </div>
 
-      <DemoBanner phase={phase} onAutoRun={handleAutoRun} loading={loading} />
-
-      <ScenarioSwitcher
-        activeId={activeScenario}
-        onSelect={handleScenarioSelect}
-        disabled={loading}
+      <BlueprintStatus
+        projectSlug={project.slug}
+        blueprintSlug={project.blueprintSlug}
       />
 
       <TodayBanner today={today} />
 
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form
+        onSubmit={(e) => e.preventDefault()}
+        className="space-y-6"
+      >
         {/* Step 1 — Size */}
         <Card>
           <CardHeader>
@@ -1217,43 +994,9 @@ export function GuidedDemo() {
           </CardContent>
         </Card>
 
-        {/* Submit */}
-        {Object.keys(form.formState.errors).length > 0 &&
-        form.formState.isSubmitted ? (
-          <Alert variant="destructive">
-            <AlertDescription>
-              Please fill in the highlighted fields above.
-            </AlertDescription>
-          </Alert>
-        ) : null}
-
-        <div className="flex items-center justify-between gap-4">
-          <p className="text-xs text-muted-foreground hidden sm:block">
-            The calculation runs on a Leapter blueprint — not hard-coded in the
-            app.
-          </p>
-          <Button
-            type="submit"
-            size="lg"
-            disabled={loading}
-            className="px-8 rounded-full text-white"
-            style={{
-              backgroundColor: loading ? undefined : "var(--app-accent)",
-            }}
-          >
-            {loading ? (
-              "Calculating…"
-            ) : (
-              <>
-                Calculate Price
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </>
-            )}
-          </Button>
-        </div>
       </form>
 
-      <div ref={resultRef} aria-live="polite" className="space-y-6">
+      <div aria-live="polite" className="space-y-6">
         {error && (
           <Alert variant="destructive">
             <AlertDescription>{error}</AlertDescription>
@@ -1263,31 +1006,24 @@ export function GuidedDemo() {
         {result && hasResult ? (
           <GlassMode.Result>
             <div
-              key={runId}
-              className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out"
+              className={cn(
+                "transition-opacity duration-200",
+                loading && "opacity-70",
+              )}
             >
               <PizzaResults data={result} pickedDay={resultDay} />
-
-              <div className="mt-6 flex justify-center sm:hidden">
-                <span className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground animate-bounce">
-                  <Workflow className="h-3.5 w-3.5" />
-                  Tap above to see the logic trace
-                </span>
-              </div>
             </div>
           </GlassMode.Result>
         ) : (
           !error && (
             <Card className="border-dashed bg-muted/30">
-              <CardContent className="py-10 text-center">
+              <CardContent className="flex flex-col items-center gap-2 py-10 text-center">
+                <Loader2
+                  className="h-5 w-5 animate-spin"
+                  style={{ color: "var(--app-accent)" }}
+                />
                 <p className="text-muted-foreground">
-                  Click{" "}
-                  <strong className="text-foreground">
-                    &quot;Run the demo instantly&quot;
-                  </strong>{" "}
-                  above, or fill in the form and click{" "}
-                  <strong className="text-foreground">Calculate Price</strong>{" "}
-                  to see results here.
+                  Calculating your pizza…
                 </p>
               </CardContent>
             </Card>

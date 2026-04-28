@@ -95,7 +95,7 @@ This is required for `leapter runtime run --model <slug>` to find the file. Slug
 4. **`return;` takes no expression** — assign output params first, then `return;`.
 5. **Never shadow output params with `var`** — assign directly to outputs.
 6. **Do not generate node IDs** — auto-assigned by post-processing. Preserve existing ones when editing.
-7. **Use human-readable names** — `monthlyPremium` not `mp`, `discountRate` not `dr`.
+7. **Use human-readable names** — `totalPrice` not `tp`, `discountRate` not `dr`.
 8. **Name the current item in loops** — assign `currentInvestorName = investors[index].name` at loop start so execution traces identify _who_ is being processed.
 9. **No large inline objects** — if pushing an object with more than 2-3 fields, pre-compute each field into a labeled variable first. Inline `{ "a": x, "b": y, "c": z, ... }` is unreadable in the blueprint viewer.
 10. **Inputs: primitives only (v0.1)** — function inputs cannot use `any single`, `any multiple`, or `any`. Use associative primitive arrays (`list of text`, `list of number`) with matching indices instead. Outputs have no restriction.

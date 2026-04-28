@@ -1,5 +1,5 @@
-import InsurancePremiumCalculationPage from "@/modules/insurance-premium-calculation/page";
+import PizzaPricingPage from "@/modules/pizza-pricing/page";
 
 export default function Page() {
-  return <InsurancePremiumCalculationPage />;
+  return <PizzaPricingPage />;
 }

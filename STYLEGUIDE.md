@@ -9,7 +9,7 @@ when building or modifying the UI.
 
 | Property     | Value                          |
 |--------------|--------------------------------|
-| App name     | Insurance Premium Calculator   |
+| App name     | Pizza Pricing Calculator       |
 | Company      | (your company name)            |
 | Tagline      | (your tagline)                 |
 | Logo         | `web/public/leapter-logo-full.svg` (replace with your own) |

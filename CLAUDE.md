@@ -1,6 +1,6 @@
 # Leapter Starter (Next.js)
 
-This is a **demo application template**. The included app (Insurance Premium Calculator)
+This is a **demo application template**. The included app (Pizza Pricing Calculator)
 is just an **example** — it exists to show the architecture and will be **replaced entirely**
 when the user provides their own requirements.
 
@@ -123,10 +123,11 @@ Read `web/src/lib/project.ts` to get the app name, then present:
 ```
 This kit includes a working example you can try right away:
 
-  Insurance Premium Calculator
+  Pizza Pricing Calculator
     Open it: http://localhost:4000/calculator
-    What it does: calculates insurance premiums based on vehicle type, driver age,
-    and other factors. Try entering different values to see how the result changes.
+    What it does: calculates the price of a pizza based on size, toppings, crust,
+    and the day of the week (Pizza Tuesday is 20% off). Try changing inputs to
+    see the price update live.
 
 This example shows the full flow: requirements → blueprint → web app.
 ```
@@ -369,22 +370,22 @@ leapter-starter-nextjs/
 ### Server Action (one per blueprint)
 
 ```typescript
-// web/src/app/actions/calculate-premium.ts
+// web/src/app/actions/calculate-pizza-price.ts
 "use server";
 
 import { z } from "zod";
 import { runBlueprint } from "@/lib/leapter-client";
 
 const InputSchema = z.object({
-  vehicleType: z.enum(["car", "truck", "motorcycle"]),
-  age: z.coerce.number().min(0).max(100),
-  mileage: z.coerce.number().min(0),
+  pizzaSize: z.enum(["small", "medium", "large"]),
+  toppings: z.array(z.string()),
+  crustType: z.enum(["thin", "regular", "stuffed"]),
 });
 
-export async function calculatePremium(input: z.infer<typeof InputSchema>) {
+export async function calculatePizzaPrice(input: z.infer<typeof InputSchema>) {
   const validated = InputSchema.parse(input);
   try {
-    const result = await runBlueprint({ modelSlug: "calculate-premium", input: validated });
+    const result = await runBlueprint({ modelSlug: "pizza-pricing", input: validated });
     return { success: true as const, data: result.outputData };
   } catch (error) {
     return { success: false as const, error: error instanceof Error ? error.message : "Failed" };
@@ -404,8 +405,8 @@ feels purpose-built for that specific problem.
 - Yes/no or on/off → **Toggle card** with description, not a bare checkbox
 - Coverage tiers / plan levels → **Pricing comparison grid** (side-by-side cards)
 - Numeric range with meaning → **Slider with labeled stops**, not a number input
-- Vehicle/product type → **Icon cards** (car icon, truck icon, motorcycle icon)
-- Date selection → **Calendar picker** with context (e.g., "Policy starts on...")
+- Product/category type → **Icon cards** (e.g., size or product variants)
+- Date selection → **Calendar picker** with context (e.g., "Order date...")
 - Multi-step input → **Wizard with progress** and visual transitions
 
 **Result patterns — match the output shape:**

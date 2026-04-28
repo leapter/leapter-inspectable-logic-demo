@@ -135,7 +135,7 @@ Show what exists as a compact table using actual names from the repo:
 ```
 Projects:
   Requirement                    Blueprint                      UI Module
-  requirements/insurance-premium insurance-premium-calculation   web/src/modules/insurance-...
+  requirements/pizza-pricing     pizza-pricing                   web/src/modules/pizza-pricing
   requirements/vc-tool           vc-waterfall-calculator         web/src/modules/vc-waterfall-...
 ```
 
@@ -175,18 +175,18 @@ Only when the user picks the conversational path (or has nothing to drop in).
 Ask focused questions:
 
 1. **What's the use case?** "What kind of calculation or decision should the app handle?"
-   (e.g., insurance premium, loan eligibility, pricing calculator, tax computation)
+   (e.g., pizza pricing, loan eligibility, shipping cost, tax computation)
 2. **What are the inputs?** "What information does the user enter?"
-   (e.g., age, vehicle type, coverage level, salary)
+   (e.g., size, quantity, type, location)
 3. **What are the outputs?** "What should the app show as results?"
-   (e.g., monthly premium, breakdown by category, comparison of options)
+   (e.g., total price, breakdown by category, comparison of options)
 4. **What are the business rules?** "How is the result calculated? Any tiers, discounts, special cases?"
 5. **Any branding?** "Company name, colors, logo? Or keep it neutral for now?"
 6. **What language?** "Should the UI be in German, English, or another language?"
 
 After gathering answers, write a structured requirements document and save it to
 `requirements/<slug>/requirements.md` (create the subdirectory). The slug should be
-a hyphenated lowercase name derived from the use case (e.g., `insurance-premium`,
+a hyphenated lowercase name derived from the use case (e.g., `pizza-pricing`,
 `loan-calculator`, `pricing-tool`).
 
 Then confirm with the user: "Here's what I've captured — look good? I'll start building."
