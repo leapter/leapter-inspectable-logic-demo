@@ -50,7 +50,9 @@ my-project/
     calculate-discount/
       calculate-discount.logic.vts                   # One blueprint per file
       tests/
-        calculate-discount.test.json                 # Test suites (optional, one file per suite) When more than 25 tests. Split into multiple forming logical groups.
+        calculate-discount.test.json                 # Start with one file named after the blueprint
+        happy-path.test.json                         # Split into scenario files once cases exceed ~25
+        edge-cases.test.json
     validate-order/
       validate-order.logic.vts                       # Each blueprint in its own subdirectory
   data/
@@ -182,25 +184,6 @@ leapter push --verbose                              # Verbose output (URLs, auth
 LEAPTER_DEBUG=1 leapter push                        # Same via env var
 ```
 
-## Interpreting "push the project"
-
-When the user says "push the project" (or "deploy", "publish"), assume they mean
-**push blueprints to the Leapter SaaS** via `leapter push`. Deploying the web
-app (e.g. to Vercel) is not supported by this kit yet, so do not attempt it.
-
-Before running `leapter push`:
-
-1. **Check login** — `leapter push` requires an authenticated session. If the
-   user is not logged in, run `leapter login` first.
-2. **Tell the user which endpoint you're pushing to** — report the target host
-   (e.g. `https://test.lab.leapter.com`) before pushing, so they can confirm.
-   The host comes from the login session / `.leapter/.remote-config`.
-3. **Push itself does not require an API key** — `leapter push` uses the OAuth
-   session from `leapter login`.
-4. **Remote execution DOES require an API key.** If the user also wants to call
-   the hosted runtime (from a website or `leapter runtime run remote`), create
-   one with `leapter runtime api-key create` after the push succeeds.
-
 ## Workflow
 
 The CLI is designed for **offline-first development**. You can author, validate,
@@ -285,6 +268,12 @@ behaviour as a regression test. Suites are plain JSON under
 `logic/<slug>/tests/` and run in-process against the local runtime — no
 server, no auth, no network.
 
+**File naming.** Start with a single `<blueprint-slug>.test.json`. Split
+only when cases exceed ~25 — at that point name each file after the
+scenario group it covers, `kebab-case`, e.g. `happy-path.test.json`,
+`edge-cases.test.json`, `validation.test.json`, `tier-thresholds.test.json`.
+Describe the scenario, not the implementation (`happy-path`, not `batch-1`).
+
 **Scaffold from scratch:**
 
 ```bash
@@ -294,7 +283,7 @@ leapter test add-case <slug> --suite happy-path \
   --expect '{"total": 119}'
 ```
 
-**Or seed cases from prior ad-hoc runs** (fastest when the output is already
+**Or seed cases from saved runs** (fastest when the output is already
 correct — no need to retype inputs or transcribe outputs):
 
 ```bash
@@ -331,8 +320,6 @@ Pair with `--expect '{"detail": "..."}'` to assert on the error message.
 
 **Run:**
 
-Run tests after each change to the blueprint.
-
 ```bash
 leapter test run                               # Every suite in the project
 leapter test run <slug>                        # One blueprint's suites
@@ -354,7 +341,9 @@ Repeat steps 2–5 until the logic is correct:
 Author → Validate → Run → Inspect → Fix → Repeat
 ```
 
-This loop is entirely offline and fast — no deploy/push cycle needed.
+Run `leapter test run` after each blueprint change so regressions show
+up immediately, not after the next push. This loop is entirely offline
+and fast — no deploy/push cycle needed.
 
 ### Step 8. Serve locally (optional — for frontend development)
 
@@ -375,6 +364,25 @@ The server exposes:
 The `{appspace}` and `{appId}` path segments accept any value (not enforced locally).
 No authentication is required. Blueprints are re-read from disk on every request
 (hot reload — edit a `.vts` file and the next request picks up the change).
+
+## Interpreting "push the project"
+
+When the user says "push the project" (or "deploy", "publish"), assume they mean
+**push blueprints to the Leapter SaaS** via `leapter push`. Deploying the web
+app (e.g. to Vercel) is out of scope for this CLI.
+
+Before running `leapter push`:
+
+1. **Check login.** `leapter push` requires an authenticated session. If the
+   user is not logged in, run `leapter login` first.
+2. **Announce the target endpoint.** Report the host (e.g.
+   `https://lab.leapter.com`) before pushing so the user can confirm. The
+   host comes from the login session / `.leapter/.remote-config`.
+3. **Push itself does not need an API key** — it uses the OAuth session from
+   `leapter login`.
+4. **Remote execution DOES need an API key.** If the user also wants to call
+   the hosted runtime (from a website or `leapter runtime run remote`), create
+   one with `leapter runtime api-key create` after the push succeeds.
 
 ### Step 9. Push & build a website (when ready)
 

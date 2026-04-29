@@ -1,4 +1,4 @@
-# Veritas Built-in Functions & Operations v0.1
+# Veritas Built-in Functions & Operations v0.2
 
 Reference for all built-in operations available in Veritas blueprints.
 
@@ -79,7 +79,7 @@ results.push({ "name": employeeNames[index], "salary": employeeSalaries[index], 
 //* Prepare result fields
 var
 //* Name of employee being processed
-currentName: text = employeeNames[index],
+currentName: _text = employeeNames[index],
 //* Current base salary
 currentSalary: number = employeeSalaries[index],
 //* Total compensation including bonus
@@ -96,84 +96,64 @@ results.push({
 
 **Rule of thumb:** More than 2-3 fields? Break it up. Each field computation is a separate labeled step.
 
-### Parallel Arrays Pattern (replacing maps/dictionaries)
+### Structured Inputs (worked example)
 
-The runtime does not support dynamic property assignment. Use parallel arrays for key-value lookups:
+Pass structured data by declaring a type in `data/types.data.vts` and referencing it from the logic file:
 
 ```veritas
-//* Declare computed scores
-var
-//* Per-item scores
-scores: any multiple = [];
-
-//* Compute score for each item
-for (var item in items) {
-    //* Calculate and store score
-    scores.push(item.value * multiplier);
+// data/types.data.vts
+define Employee "Someone on the payroll" {
+  name: _text "Legal name"
+  salary: number "Annual salary in USD"
+  rating: number "Performance rating, 1-5"
 }
-// Access score for item at index: scores[index]
 ```
 
-### Associative Primitive Arrays (v0.1 input workaround)
-
-In v0.1, function inputs only support primitives and primitive arrays — no `any single` or `any multiple`. To pass structured data (e.g., a list of employees), use parallel primitive arrays matched by index:
-
 ```veritas
-//* Bonus Calculator
-"""Calculates performance bonuses using parallel arrays for employee data."""
+// logic/calculate-bonuses/calculate-bonuses.logic.vts
+//* Calculate Bonuses
+"""Distributes a bonus pool proportionally to employee performance."""
 function calculateBonuses(
-    //* Employee names (one per employee, index-matched)
-    employeeNames: list of text,
-    //* Annual salaries (one per employee, index-matched)
-    employeeSalaries: list of number,
-    //* Performance ratings 1-5 (one per employee, index-matched)
-    employeeRatings: list of number,
+    //* Employees to pay
+    employees: list of Employee,
     //* Company-wide bonus pool
     bonusPool: number
 ) ->
-    //* Per-employee bonus amounts
+    //* Bonus per employee, same index as input
     bonuses: list of number
 {
-    section "Validate Input Arrays" {
-        """All employee arrays must have the same length to ensure data integrity."""
-        //* Check array lengths match
-        choose {
-            //* Mismatched array lengths
-            if (employeeNames.length != employeeSalaries.length or employeeNames.length != employeeRatings.length) {
-                //* Reject invalid input
-                throw "All employee arrays must have the same length";
-            }
-        }
-    }
-
     section "Calculate Bonuses" {
-        """Distribute the bonus pool proportionally based on salary-weighted performance ratings."""
+        """Weight each employee's share of the pool by their performance rating."""
         //* Declare loop index
         var
-        //* Current employee position
+        //* Current position
         index: number = 0;
 
         //* Process each employee
-        for (index = 0; index < employeeNames.length; index += 1) {
-            //* Current employee name (for trace readability)
+        for (index = 0; index < employees.length; index += 1) {
+            //* Current employee (for trace readability)
             var
-            //* Name of the employee being processed
-            currentName: text = employeeNames[index];
-            //* Calculate weighted bonus
+            //* Employee being processed
+            currentEmployee: Employee = employees[index];
+            //* Weighted bonus for this employee
             var
-            //* Bonus for this employee
-            bonus: number = bonusPool * employeeRatings[index] / 5;
+            //* Proportional bonus
+            bonus: number = bonusPool * currentEmployee.rating / 5;
             //* Store bonus
             bonuses.push(bonus);
         }
     }
 
-    //* Return results
+    //* Return
     return;
 }
 ```
 
-**Naming convention:** `<entity><Field>` — e.g., `employeeNames`, `employeeSalaries`, `employeeRatings`. Always validate that all arrays have matching lengths.
+**Why this is idiomatic:**
+
+- One input parameter per logical entity instead of one per field.
+- Field access reads as domain language (`currentEmployee.rating`) rather than indexed lookup.
+- The CLI validates field references — a typo like `employee.ratng` fails `leapter validate` with a cross-reference error.
 
 ### Linear Search Pattern (lookup by key)
 
@@ -246,26 +226,116 @@ roundedAmount = Math.round(amount * 100) / 100;
 
 ## Blueprint Calls
 
-Invoke another blueprint (helper function or external model):
+A Leapter project is a set of blueprints that can call each other. This is the primary unit of reuse — decompose complex logic into a main blueprint plus helper blueprints and have main call the helpers via `__call_blueprint__`.
 
-```veritas
-//* Look up tier rate
-__call_blueprint__ @ref("Rate Lookup") (
-    tier = customerTier
-) -> rateResult;
+### Syntax
 
-//* Use the returned value
-finalPrice = amount * rateResult.rate;
 ```
-
-**Syntax:** `__call_blueprint__ @ref(modelName, appName?) (inputs) -> resultVar;`
+__call_blueprint__ @ref(modelName, appName?) (inputs) -> resultVar;
+```
 
 **Rules:**
 
 - `@ref` takes `(modelName)` or `(modelName, appName)`
-- **Same file:** use the function identifier name — `@ref("lookupRate")`
-- **Cross-file (same project):** use the blueprint's `//*` label — `@ref("Rate Lookup")`
-- **Cross-project:** use `@ref("ModelName", "AppName")`
-- `-> resultVar` receives the **full output object**, not a single field. Access fields via `resultVar.fieldName`
+- **Same-file helpers** (multi-function in one file): use the function identifier name — `@ref("lookupRate")`
+- **Cross-file helpers** (same project, separate `.logic.vts` files — the standard project layout): use the helper blueprint's `//*` label — `@ref("Rate Lookup")`
+- **Cross-project calls:** use `@ref("ModelName", "AppName")`
+- `-> resultVar` receives the **full output object** of the called blueprint, not a single field. Access fields via `resultVar.fieldName`
 - The result variable should be typed as `any single`
-- Helper functions are placed **before** the main function in the file
+- For same-file helpers, the helper function declaration must appear **before** the main function in the file
+
+### Worked example — cross-file helper in a project
+
+Project layout:
+
+```
+logic/
+  calculate-shipping-fee/
+    calculate-shipping-fee.logic.vts      # main
+  lookup-zone-rate/
+    lookup-zone-rate.logic.vts            # helper called by main
+```
+
+`lookup-zone-rate.logic.vts` — helper blueprint, one function, one file:
+
+```veritas
+//* Zone Rate Lookup
+"""Return the per-kg shipping rate for a destination zone."""
+function lookupZoneRate(
+    //* Destination zone code (A-E)
+    zone: _text
+) ->
+    //* Shipping rate per kilogram, in euros
+    ratePerKg: number
+{
+    //* Resolve zone rate
+    choose {
+        //* Zone A (domestic)
+        if (zone is "A") {
+            //* Set rate
+            ratePerKg = 2.50;
+        }
+        //* Zone B (regional)
+        if (zone is "B") {
+            //* Set rate
+            ratePerKg = 4.00;
+        }
+        //* Default zone (international)
+        else {
+            //* Set rate
+            ratePerKg = 9.50;
+        }
+    }
+    //* Return
+    return;
+}
+```
+
+`calculate-shipping-fee.logic.vts` — main blueprint, calls the helper by its label:
+
+```veritas
+//* Calculate Shipping Fee
+"""Total shipping fee = zone rate × weight, with optional expedited surcharge."""
+function calculateShippingFee(
+    //* Destination zone code (A-E)
+    zone: _text,
+    //* Package weight in kilograms
+    weightKg: number,
+    //* Whether expedited shipping is requested
+    expedited: boolean
+) ->
+    //* Total shipping fee in euros
+    totalFee: number
+{
+    //* Look up the zone's base rate via the helper blueprint
+    var
+    //* Zone lookup result
+    zoneResult: any single = null;
+    //* Call the helper
+    __call_blueprint__ @ref("Zone Rate Lookup") (
+        zone = zone
+    ) -> zoneResult;
+
+    //* Compute base fee
+    totalFee = zoneResult.ratePerKg * weightKg;
+
+    //* Apply expedited surcharge
+    choose {
+        //* Expedited shipment
+        if (expedited is true) {
+            //* Add 50% surcharge
+            totalFee = totalFee * 1.5;
+        }
+    }
+
+    //* Return
+    return;
+}
+```
+
+Key points:
+
+- `@ref("Zone Rate Lookup")` — matches the helper blueprint's label. The label comes from the `//*` comment on the function declaration (here `//* Zone Rate Lookup`). If the `//*` is ever missing, the converter falls back to a title-cased version of the function name (`lookupZoneRate` → `"Lookup Zone Rate"`); but every blueprint carries a `//*` label in practice (Critical Rule 1 in `SKILL.md`), so you always author and call by that text.
+- Declare the result variable as `any single` before the call, then invoke with `__call_blueprint__ ... -> zoneResult;`.
+- Access fields on the returned object: `zoneResult.ratePerKg`. The returned object shape matches the helper's output parameters.
+- The helper is a complete, self-contained blueprint — it could be run standalone via `leapter runtime run --model lookup-zone-rate`, or called from any other blueprint in the project.
