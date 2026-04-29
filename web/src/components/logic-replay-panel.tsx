@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ExternalLink, Loader2, X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import Image from "next/image";
 import { fetchModelDefinition } from "@/app/actions/blueprint";
 import { getClientConfig } from "@/lib/runtime-config";
 import { loadViewerScript } from "@/lib/load-viewer";
 import { buildModelInvocation } from "@/lib/viewer-types";
-import { buildTraceUrl } from "@/lib/runtime-config";
 import { LogicViewerEmbed } from "./logic-viewer-embed";
 import type { TraceData } from "@leapter/client";
 
@@ -106,11 +105,6 @@ export function LogicReplayPanel({
         )
       : null;
 
-  const labUrl =
-    runId && modelId
-      ? buildTraceUrl(projectSlug, runId, modelId, localProjectId)
-      : null;
-
   const hasRun = Boolean(runId && modelId && traceData);
 
   return (
@@ -190,20 +184,6 @@ export function LogicReplayPanel({
           </div>
         )}
       </div>
-
-      {labUrl && (
-        <div className="border-t border-border/40 bg-background/60 px-5 py-2.5 backdrop-blur-sm">
-          <a
-            href={labUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Open in Leapter Lab
-            <ExternalLink className="h-3 w-3" />
-          </a>
-        </div>
-      )}
     </div>
   );
 }

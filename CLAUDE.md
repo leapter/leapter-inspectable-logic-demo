@@ -480,6 +480,10 @@ can adjust if requirements demand it.
 - **Preserve Glass Mode.** The debug toggle, `DebugPortal` result wrapper, and
   logic-replay split pane are core to the kit — re-skin them for the new use
   case if needed, but keep the flow intact.
+- **No footer under the embedded blueprint viewer.** The `LogicReplayPanel`
+  must not render any footer, action bar, or link strip below the embedded
+  `<leapter-logic-viewer>` (e.g. "Open in Leapter Lab"). The viewer occupies
+  the full panel height beneath the header — do not reintroduce this footer.
 - **Keep sample data in fixture files**, separate from source.
 - **Scope to the demo.** Build what the requirements ask for and stop there —
   no CI/CD, no test frameworks, no monitoring, no external APIs beyond the
