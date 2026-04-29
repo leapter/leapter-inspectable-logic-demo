@@ -22,13 +22,15 @@ The included example is a pizza pricing calculator. Change the size, toppings, c
 git clone https://github.com/leapter/leapter-starter-nextjs.git my-app
 cd my-app
 pnpm install
-pnpm dev
 ```
 
-Open:
-
+To start the server run:
 ```text
-http://localhost:4000/calculator
+pnpm dev
+```
+Then open the example app in your browser:
+```text
+http://localhost:4000
 ```
 
 Or start with the agent workflow to build your own app:
