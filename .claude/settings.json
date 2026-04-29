@@ -1,28 +1,18 @@
 {
   "permissions": {
     "allow": [
-      "Bash(.leapter-tools/cli/leapter:*)",
-      "Bash(*/.leapter-tools/cli/leapter:*)",
-      "Bash(cd *&&*.leapter-tools/cli/leapter:*)",
-      "Bash(cd *&&*/.leapter-tools/cli/leapter:*)",
-      "Bash(../../.leapter-tools/cli/leapter validate:*)",
+      "Bash(*leapter-tools/cli/leapter)",
+      "Bash(*leapter-tools/cli/leapter *)",
+      "Bash(cd *&&*leapter-tools/cli/leapter *)",
+      "Bash(cd * && *leapter-tools/cli/leapter *)",
       "Bash(~/.leapter/bin/leapter:*)",
-      "Bash(cd *&&*leapter:*)",
       "Bash(npx tsc:*)",
       "Bash(pnpm --filter web build)",
       "Bash(python3 -c ':*)",
-      "Bash(../../.leapter-tools/cli/leapter runtime run --model vc-waterfall-calculator --input '{:*)",
       "Bash(npx next:*)",
-      "Bash(../../.leapter-tools/cli/leapter runtime:*)",
       "Bash(curl -s http://localhost:3000/*)",
       "Bash(curl -s http://localhost:4004/*)",
       "Bash(curl -s http://localhost:4004/)",
-      "Bash(.leapter-tools/cli/leapter *)",
-      "Bash(./.leapter-tools/cli/leapter *)",
-      "Bash(../.leapter-tools/cli/leapter *)",
-      "Bash(cd leapter && ../.leapter-tools/cli/leapter *)",
-      "Bash(cd * && .leapter-tools/cli/leapter *)",
-      "Bash(cd * && ../.leapter-tools/cli/leapter *)",
       "Bash(pnpm dev)",
       "Bash(pnpm install)",
       "Bash(pnpm install --frozen-lockfile)",
@@ -38,5 +28,19 @@
     "next-devtools",
     "vercel",
     "context7"
-  ]
+  ],
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path // empty'); case \"$f\" in *.vts) ;; *) exit 0 ;; esac; d=$(dirname \"$f\"); while [ \"$d\" != \"/\" ] && [ ! -f \"$d/leapter.project\" ]; do d=$(dirname \"$d\"); done; [ -f \"$d/leapter.project\" ] && \"$CLAUDE_PROJECT_DIR/.leapter-tools/cli/leapter\" format \"$d\"",
+            "statusMessage": "Formatting Veritas blueprints"
+          }
+        ]
+      }
+    ]
+  }
 }
