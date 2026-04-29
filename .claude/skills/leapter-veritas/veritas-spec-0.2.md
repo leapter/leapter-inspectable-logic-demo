@@ -1,15 +1,15 @@
-# Veritas Language Specification v0.1
+# Veritas Language Specification v0.2
 
 Veritas is a business logic DSL. Programs are called **blueprints**. Every statement requires a label. The runtime is ES5-based with specific divergences documented below.
 
-> **Scope:** This spec covers the core language without custom complex types (`define`). Custom types will be covered in a future version.
+Projects declare shared domain types in a single `data/types.data.vts` file and reference them from `.logic.vts` blueprints — see **Structured Types** below.
 
 ## Design Philosophy
 
 Veritas blueprints are **living documentation** of business rules. They are meant to be validated by **domain experts who are not programmers**. Every naming choice should prioritize human readability:
 
-- Use descriptive variable names: `totalPrice`, not `tp` or `price`
-- Use full words in labels: `//* Calculate total pizza price`, not `//* Calc price`
+- Use descriptive variable names: `monthlyPremium`, not `mp` or `premium`
+- Use full words in labels: `//* Calculate monthly insurance premium`, not `//* Calc premium`
 - Section descriptions explain the **business rationale** — reference regulations, policies, or domain context
 - Avoid abbreviations: `discountRate`, not `discRate`; `customerAge`, not `age` (when ambiguous)
 - Loop variables are the one exception where short names (`index`, `itemIndex`) are acceptable
@@ -20,7 +20,7 @@ Veritas blueprints are **living documentation** of business rules. They are mean
 - **One business concept per section.** Split when the narrative shifts — "determine rates" and "apply rates" are two sections.
 - **Nest subsections for complex steps.** A parent section introduces the concept, child sections handle the sub-steps.
 - **Keep sections to ~15-20 statements.** Beyond that, look for natural split points.
-- **Labels describe the action in domain language.** `//* Apply Pizza Tuesday 20% discount` not `//* Multiply by 0.8`.
+- **Labels describe the action in domain language.** `//* Apply no-claims discount for clean driving records` not `//* Multiply by 0.9`.
 - **Prefer `and`/`or`/`not`/`is` over symbolic operators.** Natural language operators make conditions readable by non-programmers.
 - **Use `for...in` when you don't need the index.** `for (var item in items)` is more readable than index-based loops.
 - **Validate early, fail fast.** Put input validation sections at the top of the function with `throw` for hard rejections.
@@ -35,8 +35,9 @@ Expressions in Veritas follow **ES5 JavaScript** compliance — same operator pr
 
 | Category         | Supported                                                                            | Not Supported                                      |
 | ---------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------- | -------------------------------------- | --------------------------------------------- |
-| **Types**        | `number`, `text`, `boolean`, `date`, `time`, `datetime`, `duration`, `range`         | Classes, interfaces, enums, generics               |
-| **Collections**  | `list of <primitive>`, `any single`, `any multiple`                                  | `list of any`, `map of any`                        |
+| **Primitives**   | `_text`, `number`, `boolean`, `date`, `time`, `datetime`, `duration`, `range`        | Classes, generics                                  |
+| **User types**   | Structures + aliases via `define` in `data/types.data.vts`                           | Inline `define` inside `.logic.vts`                |
+| **Collections**  | `list of <type>`, `any single`, `any multiple`                                       | `list of any`, `map of any`                        |
 | **Control flow** | `choose`/`if`/`else`, `for` (index), `for...in` (each), `while`, `break`, `continue` | Standalone `if`, `else if`, `switch`, `do...while` |
 | **Operators**    | `+` `-` `*` `/` `%` `&&` `                                                           |                                                    | ` `!` `and` `or` `not` `is` `==` `===` | `++` `--`, `? :` (avoid — use choose/if/else) |
 | **Null**         | `null`, `absent`                                                                     | —                                                  |
@@ -59,7 +60,7 @@ function main(...) -> ... { ... }
 
 Every function has typed inputs, typed outputs (after `->`), and a body. Output parameters use bare `->` syntax. The function ends with `return;` (no expression).
 
-> **v0.1 limitation:** Function **inputs** can only be primitives (`number`, `text`, `boolean`) and primitive arrays (`list of number`, `list of text`). Complex types (`any single`, `any multiple`) are **not supported as inputs** — the UI cannot render them. To pass structured data, use **associative primitive arrays** (parallel arrays with matching indices — see Types section). Outputs have no such restriction.
+> Function inputs and outputs can be primitives (`_text`, `number`, ...), `list of <type>`, or user-defined structures and aliases declared in `data/types.data.vts`. See **Structured Types** below for authoring a shared domain model.
 
 ```veritas
 //* Tax Calculator
@@ -88,14 +89,48 @@ function calculateTotal(
 - Every `return;` path must have all outputs assigned
 - `return` takes no expression
 
+### Parameter Defaults
+
+Input and output parameters can carry a default value. The caller's value takes precedence; when absent, the runtime applies the default at function entry.
+
+```veritas
+function calculateTotal(
+    //* Base amount
+    amount: number,
+    //* Tax rate — defaults to 0.19 when the caller omits it
+    taxRate: type number = 0.19;
+) ->
+    //* Running items, starts empty
+    items: type list of number = [];,
+    //* Running total, starts at zero
+    total: type number = 0;
+{
+    //* Apply rate
+    total = amount * (1 + taxRate);
+    //* Return
+    return;
+}
+```
+
+**Syntax:**
+
+- Use `type` before the type name to take the default-value form: `name: type <primitive> = <literal>;`. Without `type` (`name: number`), defaults are not allowed.
+- Between parameters the inline-type form terminates with `;,` — the `;` closes the inline type, `,` separates the params. The last parameter in the list uses `;` alone.
+- Supported: primitives (`_text`, `number`, `boolean`, `date`, `time`, `datetime`, `duration`, `range`) and `list of <primitive>` / `map of <primitive>`.
+- Not supported: user-defined structures, `any single`, `any multiple`. Initialize those in the function body if needed.
+
+**Why this matters:** declare the starting state of an output in its signature instead of writing an `"Initialize outputs"` section at the top of the body that assigns `[]`, `0`, `false` to every output. Fewer statements, the contract is visible to the caller, and the reader sees the defaults without scanning the body.
+
 ## Types
 
 ### Primitives
 
+The canonical spelling in v0.2 is `_text` for strings. The legacy `string` keyword is still accepted but prefer `_text` in new code.
+
 | Type       | Description        | Example      |
 | ---------- | ------------------ | ------------ |
+| `_text`    | Unicode string     | `"hello"`    |
 | `number`   | Integer or decimal | `42`, `3.14` |
-| `text`     | Unicode string     | `"hello"`    |
 | `boolean`  | `true` or `false`  | `true`       |
 | `date`     | Calendar date      | —            |
 | `time`     | Time of day        | —            |
@@ -103,25 +138,121 @@ function calculateTotal(
 | `duration` | Time span          | —            |
 | `range`    | Numeric interval   | —            |
 
-> Both `text` and `_text` are accepted. Prefer `text`.
+> Do **not** write bare `text` in v0.2 — the linker treats an unknown identifier as a reference to a missing user-defined type and produces a `Cannot find type 'text'` error. Use `_text`.
 
 ### Collections and Dynamic Types
 
-| Type             | Use for             | Example                  | As input (v0.1)   |
-| ---------------- | ------------------- | ------------------------ | ----------------- |
-| `list of number` | Array of primitives | `[1, 2, 3]`              | supported         |
-| `list of text`   | Array of strings    | `["a", "b"]`             | supported         |
-| `any single`     | A single object     | `{"name": "Alice"}`      | **not supported** |
-| `any multiple`   | Array of objects    | `[{"id": 1}, {"id": 2}]` | **not supported** |
-| `any`            | Unknown/flexible    | —                        | **not supported** |
+| Type             | Use for                        | Example                  | Input supported? |
+| ---------------- | ------------------------------ | ------------------------ | ---------------- |
+| `list of <type>` | Array of primitives or structs | `[1, 2, 3]` / `[order]`  | yes              |
+| `any single`     | Opaque single object           | `{"name": "Alice"}`      | yes              |
+| `any multiple`   | Opaque array of objects        | `[{"id": 1}, {"id": 2}]` | yes              |
+| `any`            | Unknown/flexible               | —                        | no               |
 
-**Invalid:** `list of any`, `map of any`. Use `any multiple` for arrays of complex objects.
+**Invalid:** `list of any`, `map of any`. Prefer a named structure over `any single` / `any multiple` whenever the shape is known — structures give the reader a name, and the CLI validates cross-references against the types document.
 
-**Maps:** `map of <type>` parses but the runtime does not support dynamic property assignment on `{}` objects. Use parallel arrays instead.
+**Maps:** `map of <type>` parses but the runtime does not support dynamic property assignment on `{}` objects. Model the shape as a structure when the keys are fixed.
 
-### Associative Primitive Arrays (v0.1 workaround for complex inputs)
+## Structured Types
 
-Since `any single` and `any multiple` cannot be used as function inputs in v0.1, represent structured data as **parallel primitive arrays** — one array per field, matched by index. Name them `<entity><Field>` (e.g., `employeeNames`, `employeeSalaries`), validate lengths match at the top, and document the association in labels. See `veritas-functions-0.1.md` for a complete working example.
+In v0.2 a project may declare shared domain types in a **single types document** at `data/types.data.vts`. One document per project. Logic files reference the declared names directly in parameter, output, and variable positions.
+
+> **Iteration-1 constraint:** only one `.data.vts` file per project. Multi-file type models are a follow-up.
+
+### `data/types.data.vts`
+
+Two forms of `define` are supported: structures (fields with types) and aliases (a new name for an existing type, optionally constrained to a value set).
+
+```veritas
+// data/types.data.vts
+
+define Employee "Someone on the payroll" {
+  name: _text "Legal name"
+  salary: number "Annual salary in USD"
+  rating: number "Performance rating, 1-5"
+}
+
+define Order "A customer order" {
+  orderId: _text "External order identifier"
+  total: number "Order total in USD"
+  tier: Tier "Loyalty band the customer is in"
+}
+
+define Tier "Customer loyalty band" as _text constrained_to ["bronze", "silver", "gold"]
+```
+
+**Structure rules:**
+
+- `define Name "description" { ... }` — the description string is recommended. The `as Structure` suffix is accepted but redundant; omit it.
+- Each field: `fieldName: Type "description"?`, optionally followed by `?` to mark the field optional.
+- Field types can be primitives, other structures, `list of <type>`, or aliases.
+- Fields may reference structures defined later in the same file — order is not significant.
+
+**Alias rules:**
+
+- `define Name "description" as <type>` creates a semantic alias for an existing type.
+- Add `constrained_to [...]` with string literals to produce an enum-like restriction (today validated by the runtime, not by the grammar).
+
+**Naming conventions:**
+
+- `PascalCase` for structure and alias names (`Employee`, `Tier`).
+- `camelCase` for field names (`orderId`, `totalAmount`).
+- Match the convention LLMs default to so generated code stays idiomatic.
+
+### Using structures from `.logic.vts`
+
+Reference declared names directly:
+
+```veritas
+//* Calculate Bonuses
+"""Distributes a bonus pool proportionally to employee performance."""
+function calculateBonuses(
+    //* Employees to pay
+    employees: list of Employee,
+    //* Company-wide bonus pool
+    bonusPool: number
+) ->
+    //* Bonus per employee, same index as input
+    bonuses: list of number
+{
+    //* Declare loop index
+    var
+    //* Current position
+    index: number = 0;
+
+    //* Pay each employee
+    for (index = 0; index < employees.length; index += 1) {
+        //* Current employee (for trace readability)
+        var
+        //* Employee being processed
+        currentEmployee: Employee = employees[index];
+        //* Bonus for this employee
+        var
+        //* Weighted bonus
+        bonus: number = bonusPool * currentEmployee.rating / 5;
+        //* Store bonus
+        bonuses.push(bonus);
+    }
+    //* Return
+    return;
+}
+```
+
+**Rules:**
+
+- Field access uses dot notation: `currentEmployee.name`, `order.tier`. Nested access works: `order.customer.email`.
+- Bracket notation is required for reserved-word field names: `item["type"]`.
+- A logic file that references an undefined type produces a `Cannot find type '<Name>'` error during `leapter validate`. Fix the types file first, then re-validate the logic.
+
+### Validation loop
+
+```
+1. Edit data/types.data.vts → leapter validate
+2. Edit logic/<slug>/<slug>.logic.vts → leapter validate
+3. If logic reports `Cannot find type '...'`, return to step 1
+```
+
+Validating the types document in isolation (before the logic) keeps the error loop targeted. The CLI runs both passes automatically during a project-level `leapter validate`.
 
 ## Variables
 
@@ -144,12 +275,12 @@ Compound assignment operators: `=`, `+=`, `-=`, `*=`, `/=`, `%=`
 
 ### Arithmetic and Comparison
 
-| Operator                   | Description                            |
-| -------------------------- | -------------------------------------- |
-| `+` `-` `*` `/` `%`        | Arithmetic                             |
-| `+=` `-=` `*=` `/=` `%=`   | Compound assignment                    |
-| `<` `<=` `>` `>=`          | Comparison                             |
-| `==` `===` `!=` `!==` `is` | Equality (`is` is equivalent to `===`) |
+| Operator                          | Description                                                                                                                        |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `+` `-` `*` `/` `%`               | Arithmetic                                                                                                                         |
+| `+=` `-=` `*=` `/=` `%=`          | Compound assignment                                                                                                                |
+| `<` `<=` `>` `>=`                 | Comparison                                                                                                                         |
+| `==` `===` `!=` `!==` `is` `isnt` | Equality (`is` → `===`, `isnt` → `!==`). **Never write `is not`** — that parses as `x === (not y)`, not as inequality. Use `isnt`. |
 
 **Not supported:** `++`, `--` — use `+= 1`, `-= 1`.
 
@@ -214,7 +345,7 @@ choose {
 //* Read item type (reserved word — must use bracket notation)
 var
 //* Category of the current item
-itemCategory: text = items[index]["type"];
+itemCategory: _text = items[index]["type"];
 ```
 
 ## Control Flow
@@ -446,7 +577,7 @@ var lookupTable: any single = {};
 lookupTable["key"] = "value";   // fails at runtime
 ```
 
-**Fix:** Use parallel arrays for lookup patterns. Reading properties on input objects works fine.
+**Fix:** If the keys are known in advance, define a structure in `data/types.data.vts` and construct an instance up front rather than assigning keys at runtime. Reading properties on input objects works fine.
 
 ### String concatenation with inline arithmetic
 
