@@ -14,6 +14,8 @@ export function LogicViewerEmbed({
   className,
   hideDataPanel = true,
   hideMinimap = true,
+  autoplay = false,
+  playbackSpeed = 0.75,
 }: {
   /** Base64-encoded model JSON */
   modelJson: string;
@@ -24,6 +26,10 @@ export function LogicViewerEmbed({
   hideDataPanel?: boolean;
   /** Hide the bottom-right minimap overlay. Default: true. */
   hideMinimap?: boolean;
+  /** Auto-play the trace when set. Default: false. */
+  autoplay?: boolean;
+  /** Playback speed multiplier for the trace animation. Default: 0.75. */
+  playbackSpeed?: number;
 }) {
   const ref = useRef<HTMLElement>(null);
 
@@ -35,6 +41,20 @@ export function LogicViewerEmbed({
     if (!el) return;
     el.setAttribute("logic", modelJson);
   }, [modelJson]);
+
+  // Set autoplay before trace so the viewer sees the desired value when it
+  // reacts to a new trace attribute.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.setAttribute("autoplay", autoplay ? "true" : "false");
+  }, [autoplay]);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.setAttribute("playback-speed", String(playbackSpeed));
+  }, [playbackSpeed]);
 
   useEffect(() => {
     const el = ref.current;

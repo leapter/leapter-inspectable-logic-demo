@@ -11,6 +11,8 @@ declare namespace JSX {
         // converter parses "false" as false.
         "hide-data-panel"?: boolean | "true" | "false";
         "hide-minimap"?: boolean | "true" | "false";
+        autoplay?: boolean | "true" | "false";
+        "playback-speed"?: number | string;
         "show-descriptions"?: boolean;
         "show-expressions"?: boolean;
       },

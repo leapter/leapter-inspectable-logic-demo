@@ -47,6 +47,11 @@ export function LogicReplayPanel({
   const [fading, setFading] = useState(false);
   const loadedForModel = useRef<string | null>(null);
   const prevRunId = useRef<string | undefined>(undefined);
+  const firstRunId = useRef<string | undefined>(undefined);
+  if (runId && firstRunId.current === undefined) {
+    firstRunId.current = runId;
+  }
+  const isFirstRun = runId !== undefined && runId === firstRunId.current;
 
   // Shade out / shade in on every new run after the first — the trace
   // attribute updates while the viewer is dim, then fades back to full
@@ -180,7 +185,11 @@ export function LogicReplayPanel({
               transform: fading ? "scale(0.995)" : "scale(1)",
             }}
           >
-            <LogicViewerEmbed modelJson={modelJson} traceJson={traceAttr ?? undefined} />
+            <LogicViewerEmbed
+              modelJson={modelJson}
+              traceJson={traceAttr ?? undefined}
+              autoplay={isFirstRun}
+            />
           </div>
         )}
       </div>
