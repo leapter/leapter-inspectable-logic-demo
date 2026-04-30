@@ -497,10 +497,17 @@ export function LeapterDevtools() {
   if (!mounted) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-[9999] flex flex-col items-end gap-2">
+    <div className="fixed top-4 right-4 z-[9999] flex flex-col items-end gap-2">
+      {/* Trigger button */}
+      <TriggerBadge
+        open={open}
+        onToggle={() => setOpen(!open)}
+        currentSlug={currentSlug}
+      />
+
       {/* Panel */}
       {open && (
-        <div className="w-80 rounded-xl border border-zinc-800 bg-zinc-900 shadow-2xl shadow-black/40 overflow-hidden animate-in slide-in-from-bottom-2 fade-in duration-200">
+        <div className="w-80 rounded-xl border border-zinc-800 bg-zinc-900 shadow-2xl shadow-black/40 overflow-hidden animate-in slide-in-from-top-2 fade-in duration-200">
           {/* Header */}
           <div className="flex items-center justify-between px-3 py-2.5 border-b border-zinc-800">
             <div className="flex items-center gap-2">
@@ -547,13 +554,6 @@ export function LeapterDevtools() {
           </div>
         </div>
       )}
-
-      {/* Trigger button */}
-      <TriggerBadge
-        open={open}
-        onToggle={() => setOpen(!open)}
-        currentSlug={currentSlug}
-      />
     </div>
   );
 }
