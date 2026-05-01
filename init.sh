@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Initialize the web app for local development.
-# Copies .env.example → .env.local with the local runtime URL enabled.
+# Copies .env.example → .env.local. Local dev runs blueprints in-browser
+# via @leapter/runtime-browser - no runtime URL or API key required.
 
 set -euo pipefail
 
@@ -14,9 +15,4 @@ if [ -f "$ENV_LOCAL" ]; then
 fi
 
 cp "$ENV_EXAMPLE" "$ENV_LOCAL"
-
-# Enable the local runtime URL for dev
-sed -i.bak 's|^# LEAPTER_RUNTIME_URL=.*|LEAPTER_RUNTIME_URL=http://localhost:4004/api/v1/_/_|' "$ENV_LOCAL"
-rm -f "$ENV_LOCAL.bak"
-
-echo "Created web/.env.local (local runtime at :4004)"
+echo "Created web/.env.local"

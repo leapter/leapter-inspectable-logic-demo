@@ -3,8 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2, X } from "lucide-react";
 import Image from "next/image";
-import { fetchModelDefinition } from "@/app/actions/blueprint";
-import { getClientConfig } from "@/lib/runtime-config";
+import { fetchModelDefinition } from "@/lib/runtime";
 import { loadViewerScript } from "@/lib/load-viewer";
 import { buildModelInvocation } from "@/lib/viewer-types";
 import { LogicViewerEmbed } from "./logic-viewer-embed";
@@ -21,6 +20,8 @@ function utf8ToBase64(str: string): string {
 
 interface LogicReplayPanelProps {
   projectSlug: string;
+  /** Blueprint slug - used to locate the precompiled JSON in local mode. */
+  blueprintSlug: string;
   runId: string | undefined;
   modelId: string | undefined;
   localProjectId?: string;
@@ -32,6 +33,7 @@ interface LogicReplayPanelProps {
 
 export function LogicReplayPanel({
   projectSlug,
+  blueprintSlug,
   runId,
   modelId,
   localProjectId,
@@ -79,8 +81,10 @@ export function LogicReplayPanel({
     setLoading(true);
     setLoadError(null);
 
-    const override = getClientConfig(projectSlug, localProjectId);
-    Promise.all([loadViewerScript(), fetchModelDefinition(modelId, override)])
+    Promise.all([
+      loadViewerScript(),
+      fetchModelDefinition({ projectSlug, projectId: localProjectId }, blueprintSlug),
+    ])
       .then(([, modelResult]) => {
         if (loadedForModel.current !== modelId) return;
         if (!modelResult.success) {
@@ -94,7 +98,7 @@ export function LogicReplayPanel({
         setLoadError(err instanceof Error ? err.message : "Failed to load viewer");
       })
       .finally(() => setLoading(false));
-  }, [modelId, projectSlug, localProjectId]);
+  }, [modelId, blueprintSlug, projectSlug, localProjectId]);
 
   const traceAttr =
     viewerReady && inputData && outputData && runId && traceData

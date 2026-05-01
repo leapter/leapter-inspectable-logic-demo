@@ -20,12 +20,14 @@ const SPLIT_DEFAULT = 50;
 export function GlassModeImpl({
   children,
   projectSlug,
+  blueprintSlug,
   localProjectId,
   run,
   accentColor,
 }: {
   children: React.ReactNode;
   projectSlug: string;
+  blueprintSlug: string;
   localProjectId?: string;
   run: GlassRun;
   accentColor?: string;
@@ -124,6 +126,7 @@ export function GlassModeImpl({
     <GlassContext.Provider
       value={{
         projectSlug,
+        blueprintSlug,
         localProjectId,
         run,
         showLogic: effectiveShowLogic,
@@ -205,6 +208,7 @@ export function GlassModeImpl({
             >
               <LogicReplayPanel
                 projectSlug={projectSlug}
+                blueprintSlug={blueprintSlug}
                 runId={run.runId}
                 modelId={run.modelId}
                 localProjectId={localProjectId}
@@ -273,6 +277,7 @@ export function GlassModeResultImpl({
     isWide,
     isRemote,
     projectSlug,
+    blueprintSlug,
     localProjectId,
     run,
   } = ctx;
@@ -292,6 +297,7 @@ export function GlassModeResultImpl({
           <div className="h-[min(75vh,560px)]">
             <LogicReplayPanel
               projectSlug={projectSlug}
+              blueprintSlug={blueprintSlug}
               runId={run.runId}
               modelId={run.modelId}
               localProjectId={localProjectId}

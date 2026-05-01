@@ -48,18 +48,22 @@ cd leapter
 
 ## App Workflow
 
-Start the local Leapter runtime and Next.js app from the repo root:
+Start the dev environment from the repo root:
 
 ```bash
 pnpm dev
 ```
 
-This starts:
+This starts two processes side-by-side:
 
-- Leapter runtime on `localhost:4004`
+- a `leapter convert --watch` watcher that compiles `.vts` blueprints to
+  JSON on every change
 - Next.js app on `localhost:4000`
 
-Do not run only the Next.js app when testing the full flow; the UI needs the runtime.
+The web app executes blueprints in-browser via `@leapter/runtime-browser` -
+no runtime server is involved. Do not run `next dev` directly when testing
+the full flow; the converter watcher needs to be running so the JSON stays
+in sync with your `.vts` edits.
 
 ## Preserve Glass Mode
 

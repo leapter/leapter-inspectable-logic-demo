@@ -43,19 +43,17 @@ If `web/.env.local` does **not** exist, run the init script to create it:
 - **macOS / Linux:** `./init.sh`
 - **Windows:** `init.cmd`
 
-The script copies `web/.env.example` → `web/.env.local` with the local runtime URL
-(`localhost:4004`) enabled and Leapter debug mode (`NEXT_PUBLIC_LEAPTER_DEV_MODE=true`) on.
+The script copies `web/.env.example` → `web/.env.local`. Local mode runs
+blueprints in-browser via `@leapter/runtime-browser` - no runtime URL or
+API key is needed for local dev. The env file is mainly there to enable
+Glass Mode (`NEXT_PUBLIC_LEAPTER_DEV_MODE=true`, the default) and to hold
+the optional remote runtime credentials when the user later toggles to
+remote mode in the devtools panel.
 
 If the init script itself is missing, create `web/.env.local` manually:
 
 ```bash
 cp web/.env.example web/.env.local
-```
-
-Then ensure these values are set:
-```
-LEAPTER_RUNTIME_URL=http://localhost:4004/api/v1/_/_
-NEXT_PUBLIC_LEAPTER_DEV_MODE=true
 ```
 
 Report the result in the Tooling Health section (Phase 3).
@@ -85,9 +83,10 @@ Welcome to the Leapter Starter!
 You describe business rules — I turn them into a working web app.
 
 How it works:
-  Business logic  →  Leapter blueprints (.vts files)    — NOT in TypeScript
-  Web UI          →  Next.js + React + shadcn/ui         — NOT in blueprints
-  Connection      →  Server Actions call the runtime API — keeps API keys safe
+  Business logic  →  Leapter blueprints (.vts files)            — NOT in TypeScript
+  Web UI          →  Next.js + React + shadcn/ui                 — NOT in blueprints
+  Local runtime   →  blueprints execute in the browser via WASM  - no server needed
+  Remote option   →  Server Actions call the hosted runtime      - for production / shared state
 ```
 
 ## Phase 3: Tooling Health
@@ -100,7 +99,7 @@ Tooling:
   pnpm:          v9.x
   Leapter CLI:   .leapter-tools/cli/leapter (v0.1.0)
   CLI test:      leapter validate — OK
-  Environment:   web/.env.local — created (debug mode on, runtime localhost:4004)
+  Environment:   web/.env.local — created (debug mode on, in-browser runtime)
   Dependencies:  installed
   API key:       not configured (needed for remote deployment only)
   VS Code ext:   bundled — install from .leapter-tools/ if not yet active
@@ -115,7 +114,7 @@ If something is missing, add a one-line fix suggestion inline.
 - `CLI test:      .leapter-tools/cli/leapter — MISSING`
 
 **Environment row:** Show the result of Phase 1a. Examples:
-- `Environment:   web/.env.local — created by init.sh (debug on, runtime localhost:4004)`
+- `Environment:   web/.env.local — created by init.sh (debug on, in-browser runtime)`
 - `Environment:   web/.env.local — already existed (debug on)`
 - `Environment:   web/.env.local — MISSING (init.sh failed, see error above)`
 
@@ -225,8 +224,8 @@ Workflow:
   1. Tell me about the use case — I'll create a requirements doc (or drop one into requirements/)
   2. I create Leapter blueprints (business logic) and validate them
   3. I build a tailored Next.js UI with shadcn/ui components
-  4. Test locally:  leapter runtime serve  +  cd web && pnpm dev
-  5. Deploy:        leapter push  +  cd web && vercel deploy
+  4. Test locally:  pnpm dev  (one process - converter watcher + Next.js)
+  5. Deploy:        pnpm push  +  cd web && vercel deploy
 ```
 
 And mention the key skills available:
