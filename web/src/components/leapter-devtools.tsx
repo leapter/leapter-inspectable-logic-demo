@@ -15,7 +15,6 @@ import {
   Wifi,
   X,
   Copy,
-  Terminal,
   Upload,
   ChevronRight,
 } from "lucide-react";
@@ -26,10 +25,10 @@ type ProjectEntry = typeof projectConfig;
 import {
   getProjectConfig,
   setProjectConfig,
-  getClientConfig,
   type RuntimeProjectConfig,
 } from "@/lib/runtime-config";
-import { checkBlueprintConnection, discoverRemote } from "@/app/actions/blueprint";
+import { checkBlueprint } from "@/lib/runtime";
+import { discoverRemote } from "@/app/actions/blueprint";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -53,10 +52,9 @@ interface ProjectStatus {
 
 async function checkProject(entry: ProjectEntry): Promise<ProjectStatus> {
   const config = getProjectConfig(entry.slug);
-  const override = getClientConfig(entry.slug, entry.projectId);
 
-  // Warn if remote mode but no override (missing URL/key)
-  if (config.mode === "remote" && !override) {
+  // Warn if remote mode but URL/API key still empty.
+  if (config.mode === "remote" && (!config.remoteUrl || !config.apiKey)) {
     return {
       state: "unreachable",
       message: "Remote mode selected but URL or API key is empty",
@@ -65,19 +63,11 @@ async function checkProject(entry: ProjectEntry): Promise<ProjectStatus> {
   }
 
   try {
-    const result = await checkBlueprintConnection(entry.blueprintSlug, override);
+    const result = await checkBlueprint(
+      { projectSlug: entry.slug, projectId: entry.projectId },
+      entry.blueprintSlug,
+    );
     const resolvedUrl = result.resolvedUrl;
-
-    // Detect mismatch: mode says remote but resolved URL is local
-    const isLocal = resolvedUrl?.includes("localhost") || resolvedUrl?.includes("127.0.0.1");
-    if (config.mode === "remote" && isLocal) {
-      return {
-        state: "unreachable",
-        message: "Falling back to local — remote URL or API key not configured",
-        models: [],
-        resolvedUrl,
-      };
-    }
 
     if (!result.reachable) {
       return {
@@ -95,7 +85,8 @@ async function checkProject(entry: ProjectEntry): Promise<ProjectStatus> {
     }
     // Remote uses UUIDs as model IDs, so we can't match by slug —
     // if the runtime is reachable and has models, it's connected.
-    // Local uses slugs, so we can check for a specific blueprint.
+    // Local uses slugs against the precompiled manifest, so we can check
+    // for a specific blueprint.
     if (config.mode === "local" && !result.blueprintFound) {
       return { state: "wrong-blueprint", models: result.availableModels, resolvedUrl };
     }
@@ -383,11 +374,17 @@ function ProjectRow({
             </button>
           </div>
 
-          {/* Local hint */}
+          {/* Local hint - runs in-browser, no configuration needed. */}
           {config.mode === "local" && (
-            <div className="flex items-center gap-2 bg-zinc-800/80 rounded-md px-2.5 py-2 text-[11px] font-mono text-zinc-400">
-              <Terminal className="h-3 w-3 shrink-0 text-zinc-500" />
-              <span className="flex-1 truncate">localhost:4004</span>
+            <div className="flex items-start gap-2 bg-zinc-800/80 rounded-md px-2.5 py-2 text-[11px] text-zinc-400">
+              <Radio className="h-3 w-3 mt-0.5 shrink-0 text-zinc-500" />
+              <span className="flex-1">
+                Runs in your browser via{" "}
+                <code className="font-mono text-zinc-300">
+                  @leapter/runtime-browser
+                </code>
+                . Nothing to configure.
+              </span>
             </div>
           )}
 
@@ -430,11 +427,17 @@ function ProjectRow({
                 {status.state === "wrong-blueprint" && (
                   <div className="mt-1 space-y-1">
                     <p className="text-amber-400/80">
-                      Runtime has: {status.models.join(", ")}
+                      Available: {status.models.join(", ")}
                     </p>
                     <p className="text-amber-400/80">
                       Expected: <span className="font-mono">{project.blueprintSlug}</span>
                     </p>
+                    {config.mode === "local" && (
+                      <p className="text-amber-400/80">
+                        Run <code>pnpm convert:blueprints</code> if the
+                        slug changed.
+                      </p>
+                    )}
                   </div>
                 )}
                 {status.state === "no-blueprints" &&
@@ -445,10 +448,11 @@ function ProjectRow({
                       <CopyButton text={pushCmd} />
                     </div>
                   )}
-                {status.state === "unreachable" &&
+                {status.state === "no-blueprints" &&
                   config.mode === "local" && (
-                    <p className="text-red-400/70 mt-0.5">
-                      Start with <code>pnpm dev</code>
+                    <p className="text-amber-400/80 mt-0.5">
+                      Run <code>pnpm convert:blueprints</code> to compile
+                      <code> .vts</code> files.
                     </p>
                   )}
                 {status.message && status.state !== "no-blueprints" && (

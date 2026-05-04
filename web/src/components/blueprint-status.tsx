@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { checkBlueprintConnection } from "@/app/actions/blueprint";
-import { getClientConfig } from "@/lib/runtime-config";
+import { checkBlueprint } from "@/lib/runtime";
 import { getProjectConfig } from "@/lib/runtime-config";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -41,10 +40,9 @@ export function BlueprintStatus({
     setDismissed(false);
 
     const config = getProjectConfig(projectSlug);
-    const override = getClientConfig(projectSlug);
     const mode = config.mode;
 
-    const result = await checkBlueprintConnection(blueprintSlug, override);
+    const result = await checkBlueprint({ projectSlug }, blueprintSlug);
 
     if (result.reachable && result.blueprintFound) {
       setStatus({ state: "connected", mode });

@@ -13,6 +13,8 @@ export interface GlassRun {
 
 export interface GlassContextValue {
   projectSlug: string;
+  /** Blueprint slug - used to load the precompiled model JSON in local mode. */
+  blueprintSlug: string;
   localProjectId?: string;
   run: GlassRun;
   showLogic: boolean;

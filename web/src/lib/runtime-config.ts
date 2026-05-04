@@ -9,9 +9,10 @@
  * where a one-shot read is more convenient than a hook.
  *
  * Each project can be pointed at a local or remote runtime independently.
- * Local mode talks to `localhost:4004` with an implicit project segment.
- * Remote mode forwards the resolved URL and API key from localStorage to
- * the server action, which hands them to the runtime client.
+ * Local mode runs blueprints in the browser via `@leapter/runtime-browser`
+ * - no URL, no API key, nothing to configure. Remote mode forwards the
+ * resolved URL and API key from localStorage to the server action, which
+ * hands them to the runtime client.
  */
 
 import { create } from "zustand";
@@ -71,54 +72,53 @@ export function getAllConfigs(): Record<string, RuntimeProjectConfig> {
 }
 
 /**
- * Returns client config for the server action.
+ * Returns client config for the remote-runtime server action.
  *
- * Remote mode → uses discovered URL (contains appspace/project UUIDs) + API key.
- * Local mode  → builds a per-project URL using the project UUID when available,
- *               falling back to the slug for unpushed projects.
+ * Returns `undefined` for local mode (the in-browser runtime needs no
+ * URL) and for remote mode when URL or API key are missing - the unified
+ * runtime client treats `undefined` as "not configured" and short-
+ * circuits with a clear error before any HTTP call goes out.
  *
- * The runtime accepts both UUIDs and slugs as the project segment.
- * UUIDs are preferred because they're stable across renames.
+ * `projectId` is unused today but kept on the signature so callers can
+ * pass it forward without rewiring; future remote-routing logic may
+ * branch on it.
  */
 export function getClientConfig(
   slug: string,
-  projectId?: string,
+  _projectId?: string,
 ): LeapterClientConfig | undefined {
   const config = getProjectConfig(slug);
   if (config.mode === "remote" && config.remoteUrl && config.apiKey) {
     return { runtimeUrl: config.remoteUrl, apiKey: config.apiKey };
   }
-  const projectSegment = projectId ?? slug;
-  return { runtimeUrl: `http://localhost:4004/api/v1/_/${projectSegment}` };
+  return undefined;
 }
 
 /**
- * Build a trace URL for a given run.
+ * Build a trace URL for a given run - links into Leapter Lab's web UI
+ * so the user can inspect the run alongside the blueprint diagram.
+ *
+ * Only meaningful in remote mode (when the run lives on the server). In
+ * local mode the run only exists in the browser, so we return null and
+ * callers omit the link.
  *
  * Format: {labBase}/home/projects/{projectId}/models/{modelId}#runs-{runId}
- *
- * Remote: projectId extracted from remoteUrl, labBase from config.
- * Local:  projectId passed explicitly, labBase is localhost:3000.
  */
 export function buildTraceUrl(
   slug: string,
   runId: string,
   modelId: string,
-  localProjectId?: string,
+  _localProjectId?: string,
 ): string | null {
   const config = getProjectConfig(slug);
 
-  if (config.mode === "remote" && config.remoteUrl && config.labUrl) {
-    const segments = config.remoteUrl.replace(/\/$/, "").split("/");
-    const projectId = segments[segments.length - 1];
-    if (!projectId) return null;
-    const labBase = config.labUrl.replace(/\/$/, "");
-    return `${labBase}/home/projects/${projectId}/models/${modelId}#runs-${runId}`;
+  if (config.mode !== "remote" || !config.remoteUrl || !config.labUrl) {
+    return null;
   }
 
-  if (config.mode === "local" && localProjectId) {
-    return `http://localhost:3000/home/projects/${localProjectId}/models/${modelId}#runs-${runId}`;
-  }
-
-  return null;
+  const segments = config.remoteUrl.replace(/\/$/, "").split("/");
+  const projectId = segments[segments.length - 1];
+  if (!projectId) return null;
+  const labBase = config.labUrl.replace(/\/$/, "");
+  return `${labBase}/home/projects/${projectId}/models/${modelId}#runs-${runId}`;
 }

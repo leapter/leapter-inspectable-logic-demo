@@ -4,8 +4,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Pie, PieChart, Cell, Label } from "recharts";
-import { executeBlueprint, describeBlueprint } from "@/app/actions/blueprint";
-import { getClientConfig } from "@/lib/runtime-config";
+import {
+  describeBlueprintInputs,
+  runBlueprint,
+} from "@/lib/runtime";
 import {
   Card,
   CardContent,
@@ -940,8 +942,10 @@ export default function PizzaPricingPage() {
 
   useEffect(() => {
     async function loadSchema() {
-      const override = getClientConfig(project.slug, project.projectId);
-      const res = await describeBlueprint(project.blueprintSlug, override);
+      const res = await describeBlueprintInputs(
+        { projectSlug: project.slug, projectId: project.projectId },
+        project.blueprintSlug,
+      );
       if (res.success) {
         const props = res.inputProperties as Record<string, any>;
         if (props.pizzaSize?.enum) setSizeOptions(props.pizzaSize.enum);
@@ -979,11 +983,10 @@ export default function PizzaPricingPage() {
     const timer = setTimeout(async () => {
       const seq = ++requestSeq.current;
       setLoading(true);
-      const override = getClientConfig(project.slug, project.projectId);
-      const response = await executeBlueprint(
+      const response = await runBlueprint(
+        { projectSlug: project.slug, projectId: project.projectId },
         project.blueprintSlug,
         values,
-        override,
       );
       if (seq !== requestSeq.current) return;
       if (response.success) {
@@ -1008,6 +1011,7 @@ export default function PizzaPricingPage() {
   return (
     <GlassMode
       projectSlug={project.slug}
+      blueprintSlug={project.blueprintSlug}
       localProjectId={project.projectId}
       accentColor={project.accentColor}
       run={{

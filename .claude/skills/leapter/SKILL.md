@@ -124,7 +124,9 @@ On `leapter push`, blueprints are matched to remote models by this ID:
 leapter validate                                # Validate all .vts files in project
 leapter validate <file.vts>                     # Validate a single file
 leapter validate <dir>                          # Validate all .vts files in directory
-leapter convert <file.js>                       # Convert ES5 JavaScript to Veritas
+leapter convert                                 # Convert blueprints to LogicFlowModel JSON for in-browser execution
+leapter convert --watch                         # Reconvert on every .vts change (pair with `next dev`)
+leapter convert --out web/src/leapter-blueprints  # Custom output dir
 leapter runtime run --model <slug> --input '{}' # Execute blueprint locally
 leapter runtime run --model <slug> --file in.json  # Execute with input from file
 leapter runtime run --model <slug> --input '{}' --trace  # Stream trace/log events to stderr
@@ -345,9 +347,27 @@ Run `leapter test run` after each blueprint change so regressions show
 up immediately, not after the next push. This loop is entirely offline
 and fast — no deploy/push cycle needed.
 
-### Step 8. Serve locally (optional — for frontend development)
+### Step 8. Wire blueprints into a frontend
 
-Start a local HTTP server that mirrors the production runtime API:
+For browser-based frontends (this starter's default), compile each
+blueprint to a `LogicFlowModel` JSON file and execute in-browser via
+`@leapter/runtime-browser`:
+
+```bash
+leapter convert                                    # walks logic/, writes dist/blueprints/
+leapter convert --out web/src/leapter-blueprints   # custom output dir
+leapter convert --watch                            # recompile on every .vts save (pair with `next dev`)
+```
+
+Output: `<out>/<slug>.json` per blueprint plus a `manifest.json`
+(project info + slug → modelId index). The runtime-browser package
+imports those JSON files and executes them via a QuickJS WASM sandbox.
+No runtime server, no localhost ports beyond your own dev server.
+
+**Alternative - HTTP runtime server.** If you have a non-browser
+frontend (Python service, mobile app, agent) that needs to call
+blueprints, start a local HTTP server that mirrors the production
+runtime API:
 
 ```bash
 leapter runtime serve                     # Starts on http://localhost:4004

@@ -4,11 +4,12 @@
   "scripts": {
     "vscode": "code --install-extension .leapter-tools/leapter-blueprint-viewer.vsix --install-extension anthropic.claude-code && code ./leapter ./leapter/leapter.project",
     "postinstall": "npm ci --prefix .leapter-tools/cli --silent --no-audit --no-fund",
-    "predev": "pnpm install --frozen-lockfile --silent",
-    "dev": "concurrently --names runtime,app --prefix-colors blue,green \"pnpm run dev:runtime\" \"pnpm run dev:app\"",
-    "dev:runtime": ".leapter-tools/cli/leapter runtime serve --path ./leapter --port 4004",
+    "convert:blueprints": ".leapter-tools/cli/leapter convert --project ./leapter --out web/src/leapter-blueprints",
+    "predev": "pnpm run convert:blueprints",
+    "dev": "concurrently --names convert,app --prefix-colors blue,green \"pnpm run convert:blueprints --watch\" \"pnpm run dev:app\"",
     "dev:app": "pnpm --filter web dev --port 4000",
-    "build": "pnpm --filter web build",
+    "dev:runtime": ".leapter-tools/cli/leapter runtime serve --path ./leapter --port 4004",
+    "build": "pnpm run convert:blueprints && pnpm --filter web build",
     "lint": "pnpm --filter web lint",
     "validate": "cd leapter && ../.leapter-tools/cli/leapter validate",
     "push": "cd leapter && ../.leapter-tools/cli/leapter push"

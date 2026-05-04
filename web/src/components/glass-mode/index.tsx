@@ -19,6 +19,7 @@ const DEV_MODE = process.env.NEXT_PUBLIC_LEAPTER_DEV_MODE !== "false";
 type GlassModeProps = {
   children: React.ReactNode;
   projectSlug: string;
+  blueprintSlug: string;
   localProjectId?: string;
   run: GlassRun;
   accentColor?: string;

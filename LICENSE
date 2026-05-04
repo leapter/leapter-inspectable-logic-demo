@@ -22,7 +22,8 @@ SOFTWARE.
 
 ---
 
-The contents of the `.leapter-tools/` directory are proprietary software
-provided by Leapter GmbH and are NOT covered by the MIT License above.
-They are distributed with this starter template for convenience and are
-subject to the Leapter Terms of Service (https://leapter.com/terms).
+The contents of the `.leapter-tools/` directory and the
+`packages/runtime-browser/` package are proprietary software provided by
+Leapter GmbH and are NOT covered by the MIT License above. They are
+distributed with this starter template for convenience and are subject
+to the Leapter Terms of Service (https://leapter.com/terms).
