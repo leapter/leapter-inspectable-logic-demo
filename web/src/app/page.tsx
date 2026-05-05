@@ -1,5 +1,10 @@
 import Image from "next/image";
+import Link from "next/link";
+import { MessageCircleHeart } from "lucide-react";
 import PizzaPricingPage from "@/modules/pizza-pricing/page";
+import { FeedbackHint } from "@/components/feedback-hint";
+
+const devMode = process.env.NEXT_PUBLIC_LEAPTER_DEV_MODE !== "false";
 
 export default function Home() {
   return (
@@ -20,6 +25,17 @@ export default function Home() {
             </span>
           </div>
           <nav className="flex items-center gap-3">
+            {devMode && (
+              <FeedbackHint>
+                <Link
+                  href="/feedback"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent transition-colors hover:bg-accent/20"
+                >
+                  <MessageCircleHeart className="h-3.5 w-3.5" />
+                  Share feedback
+                </Link>
+              </FeedbackHint>
+            )}
             <a
               href="https://leapter.com"
               target="_blank"

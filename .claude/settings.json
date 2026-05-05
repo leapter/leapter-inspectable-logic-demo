@@ -30,6 +30,46 @@
     "context7"
   ],
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/telemetry.mjs\" SessionStart"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/telemetry.mjs\" SessionEnd"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/telemetry.mjs\" Stop"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/telemetry.mjs\" UserPromptSubmit"
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Write|Edit|MultiEdit",
@@ -38,6 +78,14 @@
             "type": "command",
             "command": "f=$(jq -r '.tool_input.file_path // empty'); case \"$f\" in *.vts) ;; *) exit 0 ;; esac; d=$(dirname \"$f\"); while [ \"$d\" != \"/\" ] && [ ! -f \"$d/leapter.project\" ]; do d=$(dirname \"$d\"); done; [ -f \"$d/leapter.project\" ] && \"$CLAUDE_PROJECT_DIR/.leapter-tools/cli/leapter\" format \"$d\"",
             "statusMessage": "Formatting Veritas blueprints"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/telemetry.mjs\" PostToolUse"
           }
         ]
       }
