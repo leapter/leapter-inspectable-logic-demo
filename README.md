@@ -150,8 +150,7 @@ This makes the result inspectable from the inside. You are not just seeing that 
 
 ## Runtime And Lock-In
 
-This starter executes blueprints **in the browser** during development - no
-runtime server, no localhost ports beyond Next.js itself:
+This starter executes blueprints in the browser during development:
 
 ```bash
 pnpm dev
@@ -161,16 +160,14 @@ That starts two processes side-by-side:
 
 - a tiny `leapter convert --watch` watcher that compiles `.vts` blueprints
   to JSON whenever you change them
-- the Next.js app on `localhost:4000`, which loads the compiled JSON and
-  runs blueprints in-page via `@leapter/runtime-browser` (a bundled
-  `LogicRuntime` running on a QuickJS WASM sandbox)
+- the Next.js app on `localhost:4000`
 
-The same Leapter business logic can also run through other paths the
-larger Leapter platform supports:
+The larger Leapter model is runtime-flexible: the same logic can be used through different paths depending on what the application needs.
 
-- browser-embedded runtime (this starter - default for local dev)
-- server runtime (your own Node service)
-- hosted runtime via API / OpenAPI (toggle "remote" in the devtools panel)
+- local runtime during development
+- browser-embedded runtime
+- server runtime
+- API / OpenAPI
 - MCP tools for agents
 - JavaScript or Python export
 
@@ -357,6 +354,28 @@ Especially useful:
 - people with opinions on what our open-source strategy should be
 
 Open an issue, start a discussion, or tell us what breaks.
+
+## Telemetry
+
+Nothing leaves your machine automatically. There is no analytics SDK,
+no ping on launch, no background reporting.
+
+When you run Claude Code inside the starter, a hook script at
+[`.claude/hooks/telemetry.mjs`](.claude/hooks/telemetry.mjs) writes a
+local log of your prompts and the tool calls Claude makes to
+`.leapter/telemetry.jsonl` (gitignored). The log is plain JSON Lines you
+can `cat` any time, and you can clear it by deleting the file.
+
+A dev-only **Share feedback** page (top header in `pnpm dev`) lets you
+send feedback to us. It previews the literal payload before you click
+send: the exact bytes, no hidden fields. Attaching the session log and
+the project snapshot are independent opt-in checkboxes; both default
+off, and what you see in the preview is what gets sent.
+
+The hook script never records: your username, hostname, IP address,
+environment variables, or anything outside the project directory.
+Absolute paths are collapsed to basenames. Assistant responses are not
+captured; only your prompts and what Claude did with them.
 
 ## Learn More
 
