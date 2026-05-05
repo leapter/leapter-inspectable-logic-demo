@@ -150,8 +150,7 @@ This makes the result inspectable from the inside. You are not just seeing that 
 
 ## Runtime And Lock-In
 
-This starter executes blueprints **in the browser** during development - no
-runtime server, no localhost ports beyond Next.js itself:
+This starter executes blueprints in the browser during development:
 
 ```bash
 pnpm dev
@@ -161,16 +160,14 @@ That starts two processes side-by-side:
 
 - a tiny `leapter convert --watch` watcher that compiles `.vts` blueprints
   to JSON whenever you change them
-- the Next.js app on `localhost:4000`, which loads the compiled JSON and
-  runs blueprints in-page via `@leapter/runtime-browser` (a bundled
-  `LogicRuntime` running on a QuickJS WASM sandbox)
+- the Next.js app on `localhost:4000`
 
-The same Leapter business logic can also run through other paths the
-larger Leapter platform supports:
+The larger Leapter model is runtime-flexible: the same logic can be used through different paths depending on what the application needs.
 
-- browser-embedded runtime (this starter - default for local dev)
-- server runtime (your own Node service)
-- hosted runtime via API / OpenAPI (toggle "remote" in the devtools panel)
+- local runtime during development
+- browser-embedded runtime
+- server runtime
+- API / OpenAPI
 - MCP tools for agents
 - JavaScript or Python export
 
