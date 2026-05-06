@@ -14,9 +14,7 @@ In this repo, business logic lives in **Veritas** files: text-based logic files 
 
 ## What You Can Try
 
-Clone the repo, open it with Claude Code, and ask it to build a small app with business rules. Claude creates the UI, writes the Veritas logic, validates it, and wires the app to the Leapter runtime.
-
-The included example is a pizza pricing calculator. Change the size, toppings, crust, or day of week, then open **Glass Mode** to see the exact logic path that produced the result.
+The included example is a pizza pricing calculator. Change the size, toppings, crust, or day of week, then click **Show Logic** to see the exact logic path that produced the result.
 
 ```bash
 git clone https://github.com/leapter/leapter-starter-nextjs.git my-app
@@ -24,16 +22,23 @@ cd my-app
 pnpm install
 ```
 
-To start the server run:
-```text
+Start the local demo:
+
+```bash
 pnpm dev
 ```
+
 Then open the example app in your browser:
+
 ```text
 http://localhost:4000
 ```
 
-Or start with the agent workflow to build your own app:
+No Leapter SaaS account is required for this local demo.
+
+To use an agent workflow, open the repo with Claude Code, Codex, or another local coding agent that reads project instructions.
+
+With Claude Code:
 
 ```bash
 claude
@@ -45,7 +50,7 @@ Then type:
 hello
 ```
 
-Claude will check your setup, start the app, show the included example, and guide you toward creating your own app from requirements.
+The agent will check your setup, start the app, show the included example, and guide you toward creating your own app from requirements.
 
 ## Why This Exists
 
@@ -134,9 +139,9 @@ Rendered as a Leapter Blueprint, the same logic becomes an executable diagram:
 
 ## See The Logic That Ran
 
-The app includes **Glass Mode**, a developer-facing logic inspector.
+The app includes an in-browser logic inspector. Click **Show Logic** to open it.
 
-When the form calculates a result, Glass Mode shows:
+When the form calculates a result, the inspector shows:
 
 - the visual Blueprint
 - the execution trace
@@ -146,7 +151,7 @@ When the form calculates a result, Glass Mode shows:
 
 This makes the result inspectable from the inside. You are not just seeing that the app returned `$17.60`; you can see why.
 
-![Glass Mode showing inputs, outputs, and the active execution path](assets/demo-frame-07.png)
+![Logic inspector showing inputs, outputs, and the active execution path](assets/demo-frame-07.png)
 
 ## Runtime And Lock-In
 
@@ -186,6 +191,7 @@ leapter-starter-nextjs/
 ├── web/                   Next.js app shell and UI
 ├── packages/
 │   └── leapter-client/    Runtime API client
+├── AGENTS.md              Agent instructions for Codex-style tools
 ├── .claude/               Claude skills for Leapter and Veritas authoring
 └── .leapter-tools/        Bundled Leapter CLI
 ```
@@ -221,7 +227,7 @@ The agent should:
 2. validate the logic locally
 3. create a tailored app UI under `web/`
 4. wire the UI to the Blueprint runtime
-5. preserve Glass Mode so results remain inspectable
+5. preserve the logic inspector so results remain inspectable
 
 ## Useful Commands
 
@@ -327,11 +333,11 @@ What is working here:
 - local Veritas validation
 - local Blueprint execution
 - a full pizza pricing example
-- Glass Mode trace inspection
+- in-browser logic trace inspection
 - AI-assisted Blueprint edits
 - AI-assisted test creation
 - visual diffs
-- Claude Code instructions and skills
+- agent instructions for Claude Code and Codex-style tools
 - VS Code Blueprint viewer setup
 
 What is still evolving:
