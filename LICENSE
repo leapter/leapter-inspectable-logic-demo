@@ -22,8 +22,22 @@ SOFTWARE.
 
 ---
 
+Leapter proprietary components
+
+The MIT License above applies to the starter application code, examples,
+documentation, requirements, agent instructions, and other files in this
+repository except where a file or directory has its own license notice.
+
 The contents of the `.leapter-tools/` directory and the
 `packages/runtime-browser/` package are proprietary software provided by
-Leapter GmbH and are NOT covered by the MIT License above. They are
-distributed with this starter template for convenience and are subject
-to the Leapter Terms of Service (https://leapter.com/terms).
+Leapter GmbH and are NOT covered by the MIT License above. They are bundled
+with this starter so the included examples can be validated, viewed, converted,
+and executed locally without requiring a Leapter SaaS account.
+
+Those proprietary components may be used with this starter template and with
+the Leapter platform, including local development, evaluation, and demo use.
+They may not be modified, reverse-engineered, decompiled, or used to create
+derivative works except as expressly permitted by Leapter GmbH.
+
+Use of Leapter proprietary components is subject to the Leapter Terms of
+Service (https://leapter.com/terms).

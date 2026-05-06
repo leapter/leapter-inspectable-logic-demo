@@ -2,12 +2,16 @@ Leapter Proprietary License
 
 Copyright (c) 2026 Leapter GmbH. All rights reserved.
 
-The software in this directory is proprietary and confidential. It is
-distributed with the Leapter Starter template for convenience and may
-only be used in conjunction with the Leapter platform.
+The software in this directory is proprietary software provided by
+Leapter GmbH. It is bundled with the Leapter Starter template so the included
+examples can be validated, viewed, converted, and executed locally without
+requiring a Leapter SaaS account.
 
-You may NOT modify, reverse-engineer, decompile, or create derivative
-works based on this software.
+You may use this software with the Leapter Starter template and with the
+Leapter platform, including local development, evaluation, and demo use.
+
+You may NOT modify, reverse-engineer, decompile, or create derivative works
+based on this software except as expressly permitted by Leapter GmbH.
 
 Use of this software is subject to the Leapter Terms of Service:
 https://leapter.com/terms

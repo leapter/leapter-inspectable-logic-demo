@@ -392,4 +392,22 @@ captured; only your prompts and what Claude did with them.
 
 ## License
 
-The final license for this starter and the related Veritas/runtime/viewer pieces is still under review.
+The starter app code, examples, documentation, requirements, and agent
+instructions are MIT-licensed.
+
+The bundled Leapter CLI/converter, browser runtime, and VS Code Blueprint
+viewer are proprietary Leapter beta tooling. They are included so the local
+demo can validate, view, convert, and execute the example logic without a
+Leapter SaaS account.
+
+You own the business logic artifacts you create with this starter. The included
+pizza-pricing Veritas file is an example you can copy, modify, and use under
+the starter's MIT license.
+
+We are still deciding the long-term open-source shape of Veritas, local
+runtime, and viewer tooling. For now, please do not describe the whole starter
+or Leapter platform as open source.
+
+See [LICENSE](LICENSE), [.leapter-tools/LICENSE](.leapter-tools/LICENSE), and
+[packages/runtime-browser/LICENSE](packages/runtime-browser/LICENSE) for the
+full license notices.

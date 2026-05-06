@@ -22,3 +22,10 @@ execution:
 ```bash
 cd .leapter-tools/cli && npm install
 ```
+
+## License
+
+The bundled Leapter CLI is proprietary Leapter software. It is included so this
+starter can validate, convert, and run the example logic locally without a
+Leapter SaaS account. See `.leapter-tools/LICENSE` for the terms that apply to
+the bundled tooling.
