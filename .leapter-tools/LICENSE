@@ -8,12 +8,30 @@ examples can be validated, viewed, converted, and executed locally without
 requiring a Leapter SaaS account.
 
 You may use this software with the Leapter Starter template and with the
-Leapter platform, including local development, evaluation, and demo use.
+Leapter platform, including local development, evaluation, testing, CI, and
+non-production demo use. You may clone, fork, install, run, cache, and
+redistribute the Leapter Starter template, including forks or modifications of
+MIT-covered starter files, with this license notice and the other Leapter
+proprietary notices intact.
 
-You may NOT modify, reverse-engineer, decompile, or create derivative works
-based on this software except as expressly permitted by Leapter GmbH.
+Except to the extent such restrictions are prohibited by applicable law, you
+may NOT modify, reverse-engineer, decompile, extract, repackage, or create
+derivative works based on this software except as expressly permitted by
+Leapter GmbH.
 
-Use of this software is subject to the Leapter Terms of Service:
-https://leapter.com/terms
+Outputs and project artifacts generated through permitted use are not
+derivative works of this software solely because this software validates,
+converts, views, executes, or traces them. Subject to any third-party content
+included by the user, users own their user-created artifacts, including
+`.logic.vts` files, generated app code, compiled Blueprint JSON, test cases,
+local traces, screenshots, and project documentation.
+
+You may NOT use this software to build competing tooling, runtimes, viewers,
+hosted services, or language implementations. Production use outside an
+agreement with Leapter GmbH is not permitted.
+
+This software includes or depends on third-party open-source components. See
+../THIRD_PARTY_NOTICES.md for bundled third-party notices identified in this
+repository.
 
 For questions, contact: support@leapter.com

@@ -1,1 +1,7 @@
-{"private":true,"dependencies":{"quickjs-emscripten":"^0.31.0"}}
+{
+  "private": true,
+  "license": "SEE LICENSE IN ../LICENSE",
+  "dependencies": {
+    "quickjs-emscripten": "^0.31.0"
+  }
+}

@@ -1,6 +1,7 @@
 {
   "name": "leapter-starter-nextjs",
   "private": true,
+  "license": "SEE LICENSE IN ./LICENSE",
   "scripts": {
     "vscode": "code --install-extension .leapter-tools/leapter-blueprint-viewer.vsix --install-extension anthropic.claude-code && code ./leapter ./leapter/leapter.project",
     "postinstall": "npm ci --prefix .leapter-tools/cli --silent --no-audit --no-fund",

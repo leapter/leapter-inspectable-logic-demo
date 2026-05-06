@@ -2,6 +2,7 @@
   "name": "web",
   "version": "0.1.0",
   "private": true,
+  "license": "SEE LICENSE IN ../LICENSES.md",
   "scripts": {
     "dev": "next dev --port 4000",
     "build": "next build",

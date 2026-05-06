@@ -1,6 +1,6 @@
 ---
 name: leapter
-description: Leapter CLI — manage projects, push blueprints, test via runtime API, and deploy to the SaaS platform. Covers the full development and deployment lifecycle.
+description: Leapter CLI — manage projects, push Blueprints to Leapter SaaS, test via runtime API, and prepare hosted runtime access where a Leapter agreement permits it.
 version: '1.0.0'
 globs:
   - 'leapter.project'
@@ -404,11 +404,26 @@ Before running `leapter push`:
    the hosted runtime (from a website or `leapter runtime run remote`), create
    one with `leapter runtime api-key create` after the push succeeds.
 
-### Step 9. Push & build a website (when ready)
+## Production Use
 
-When you want a **production website** backed by Leapter blueprints, you need
-the hosted runtime. Pushed blueprints are immediately available — there is no
-separate deploy step. This is the only step that requires authentication.
+Do not deploy this starter in production with the bundled local CLI/converter,
+browser runtime, or VS Code viewer unless a written Leapter agreement permits it.
+
+If the user asks about production, explain that production use requires an
+appropriate Leapter agreement and either:
+
+1. Leapter-hosted runtime/API under that agreement, or
+2. removing or replacing the proprietary local runtime pieces.
+
+Do not run or recommend `vercel deploy --prod` as part of the default starter
+workflow.
+
+### Step 9. Push blueprints and prepare hosted runtime access
+
+When you want a website backed by hosted Leapter blueprints under an appropriate
+agreement, you need the hosted runtime. Pushed blueprints are immediately
+available — there is no separate blueprint deploy step. This is the only step
+that requires authentication.
 
 #### 9a. Authenticate and push
 
@@ -443,7 +458,7 @@ It's stored in `.leapter/.remote-config` (mode 0o600) and never printed in full.
 3. Click **Create API Key**, select **Execute** permission
 4. Store it: `leapter runtime api-key set lpt_...`
 
-For your deployment environment (Vercel, Netlify), set the key as an env var:
+For an approved deployment environment, set the key as an env var:
 
 ```
 LEAPTER_API_KEY=lpt_...
@@ -502,7 +517,7 @@ Base URL pattern: `https://{host}/runtime/api/v1/{appspaceId}/{appId}`
 | `POST` | `/{appspaceId}/{appId}/models/{modelId}/runs` | Execute a blueprint                           |
 | `GET`  | `/{appspaceId}/{appId}/openapi`               | OpenAPI 3.0 spec (lists all models + schemas) |
 
-Example (production):
+Example (hosted runtime under agreement):
 
 ```
 GET  https://lab.leapter.com/runtime/api/v1/{appspaceId}/{appId}/openapi

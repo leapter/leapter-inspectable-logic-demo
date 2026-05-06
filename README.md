@@ -36,6 +36,10 @@ http://localhost:4000
 
 No Leapter SaaS account is required for this local demo.
 
+This is a mixed-license starter: the app/examples/docs are MIT-licensed, while
+the bundled local Leapter tooling remains proprietary beta tooling. See
+[License](#license) for details.
+
 To use an agent workflow, open the repo with Claude Code, Codex, or another local coding agent that reads project instructions.
 
 With Claude Code:
@@ -66,7 +70,7 @@ Leapter changes the artifact. Instead of hiding business logic in TypeScript, Py
 - read as a structured specification
 - rendered as a visual program
 - edited in a diagram editor with AI support
-- executed in production
+- executed through an approved production runtime path
 - tested with ordinary inputs and outputs
 - traced step by step
 - versioned and reviewed like software
@@ -177,6 +181,14 @@ The larger Leapter model is runtime-flexible: the same logic can be used through
 - JavaScript or Python export
 
 For this starter, no Leapter SaaS account is required to validate and execute the included Blueprint. Pushing the Blueprint to Leapter Lab is optional and gives you the web-based diagram editor, AI-assisted editing, shared project workspace, visual review tools, and hosted runtime options. Login is only needed for account-bound capabilities such as API keys, hosted MCP/API execution, and production trace retention.
+
+Production note: the bundled CLI/converter, browser runtime, and VS Code
+Blueprint viewer are included for local development, evaluation, testing, CI,
+and non-production demos only. For production, use Leapter-hosted runtime or
+another runtime/export path under an agreement with Leapter GmbH, or
+remove/replace the proprietary runtime pieces. Do not deploy
+`@leapter/runtime-browser` as part of a production app unless your agreement
+permits it.
 
 ## Project Structure
 
@@ -392,17 +404,40 @@ captured; only your prompts and what Claude did with them.
 
 ## License
 
-The starter app code, examples, documentation, requirements, and agent
-instructions are MIT-licensed.
+This repository is a mixed-license starter.
+
+| Path / Artifact | License / Rights |
+|---|---|
+| `web/`, `packages/leapter-client/`, `leapter/`, `requirements/`, `AGENTS.md`, `CLAUDE.md`, `.claude/`, docs, examples, setup scripts | MIT License, except for separately noticed third-party assets and Leapter brand assets |
+| `.leapter-tools/` | Leapter proprietary beta tooling |
+| `packages/runtime-browser/` | Leapter proprietary beta tooling |
+| Leapter names, logos, and brand assets | Leapter GmbH brand assets; not a general trademark or brand license |
+| User-created `.logic.vts` files, requirements, generated app code, compiled Blueprint JSON, test cases, local traces, and other project artifacts | Owned by the user, subject to any third-party content the user includes |
+| Third-party dependencies, fonts, and template assets | Governed by their own licenses |
 
 The bundled Leapter CLI/converter, browser runtime, and VS Code Blueprint
 viewer are proprietary Leapter beta tooling. They are included so the local
 demo can validate, view, convert, and execute the example logic without a
 Leapter SaaS account.
 
-You own the business logic artifacts you create with this starter. The included
-pizza-pricing Veritas file is an example you can copy, modify, and use under
-the starter's MIT license.
+You may clone, fork, install, run, cache, and redistribute this starter with
+the proprietary notices intact. You may use the bundled proprietary tooling for
+local development, evaluation, testing, CI, and non-production demos. Production
+use of the proprietary tooling outside an agreement with Leapter GmbH is not
+permitted.
+
+You own the artifacts you create with this starter, including your
+requirements, Veritas `.logic.vts` files, generated app code, compiled
+Blueprint JSON, test cases, local traces, screenshots, and project-specific
+documentation, subject to any third-party content you include. Leapter claims no
+ownership in those user-created artifacts.
+
+Outputs and project artifacts generated through permitted use are not
+derivative works of the proprietary beta tooling solely because that tooling
+validates, converts, views, executes, or traces them.
+
+The included pizza-pricing Veritas file is an example you can copy, modify, and
+use under the starter's MIT license.
 
 We are still deciding the long-term open-source shape of Veritas, local
 runtime, and viewer tooling. For now, please do not describe the whole starter
@@ -410,4 +445,5 @@ or Leapter platform as open source.
 
 See [LICENSE](LICENSE), [.leapter-tools/LICENSE](.leapter-tools/LICENSE), and
 [packages/runtime-browser/LICENSE](packages/runtime-browser/LICENSE) for the
-full license notices.
+full license notices. See [LICENSES.md](LICENSES.md) for the full
+mixed-license overview.

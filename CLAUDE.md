@@ -304,10 +304,20 @@ pnpm dev
 ```
 
 ### 5. Deploy
+The bundled CLI/converter, browser runtime, and VS Code viewer are licensed for
+local development, evaluation, testing, CI, and non-production demos only. Do
+not deploy `@leapter/runtime-browser` as part of a production app unless a
+Leapter agreement permits it. For production, use Leapter-hosted runtime or
+another runtime/export path under an agreement with Leapter GmbH, or
+remove/replace the proprietary runtime pieces.
+
+Do not run or recommend `vercel deploy --prod` as part of the default starter
+workflow. If the user asks about production, explain the agreement/runtime
+requirement first.
+
 ```bash
-# Validate and push blueprints, then deploy the web app
+# Validate and push blueprints only when the user explicitly asks
 pnpm validate && pnpm push
-cd web && vercel deploy --prod
 ```
 
 ---
@@ -341,7 +351,7 @@ cd web && vercel deploy --prod
 | Runtime (local) | `@leapter/runtime-browser` - in-page execution via QuickJS WASM |
 | Runtime (remote) | Server Actions → hosted Leapter runtime over HTTP |
 | Business Logic | Leapter blueprints (Veritas DSL) |
-| Deployment | Vercel (zero-config) |
+| Deployment | Local/non-production demo by default; production requires an agreed Leapter runtime/deployment path |
 
 ---
 

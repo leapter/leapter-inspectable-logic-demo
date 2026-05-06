@@ -1,36 +1,32 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Leapter Starter Web App
 
-## Getting Started
+This is the Next.js app shell for the Leapter starter. The business logic does
+not live here. It lives in Veritas files under `../leapter/` and is compiled
+to local Blueprint JSON for the web app to execute and inspect.
 
-First, run the development server:
+Run the app from the repository root:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+That command starts the Veritas-to-Blueprint converter in watch mode and then
+starts Next.js on `http://localhost:4000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Avoid running `next dev` directly while testing the full flow. Without the root
+watcher, edited `.logic.vts` files will not be compiled into
+`src/leapter-blueprints/`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Runtime
 
-## Learn More
+The app executes the included Blueprint locally in the browser through
+`@leapter/runtime-browser`; no Leapter SaaS account or runtime server is needed
+for the demo.
 
-To learn more about Next.js, take a look at the following resources:
+The bundled CLI/converter, browser runtime, and VS Code viewer are proprietary
+Leapter beta tooling licensed for local development, evaluation, testing, CI,
+and non-production demos only. Do not deploy `@leapter/runtime-browser` as part
+of a production app unless a Leapter agreement permits it.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+For the full repository overview, see `../README.md`. For license details, see
+`../LICENSES.md`.

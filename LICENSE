@@ -1,3 +1,12 @@
+Mixed License Notice
+
+This repository contains MIT-covered starter files and proprietary Leapter beta
+tooling. The MIT License below applies only to files not separately licensed.
+See `LICENSES.md` for the repository license overview.
+
+Leapter names, logos, and brand assets are not licensed as general-purpose MIT
+assets or as a trademark grant.
+
 MIT License
 
 Copyright (c) 2026 Leapter GmbH
@@ -35,9 +44,15 @@ with this starter so the included examples can be validated, viewed, converted,
 and executed locally without requiring a Leapter SaaS account.
 
 Those proprietary components may be used with this starter template and with
-the Leapter platform, including local development, evaluation, and demo use.
-They may not be modified, reverse-engineered, decompiled, or used to create
-derivative works except as expressly permitted by Leapter GmbH.
+the Leapter platform, including local development, evaluation, testing, CI, and
+non-production demo use. You may clone, fork, install, run, cache, and
+redistribute this starter with the proprietary notices intact.
 
-Use of Leapter proprietary components is subject to the Leapter Terms of
-Service (https://leapter.com/terms).
+Except to the extent such restrictions are prohibited by applicable law, those
+proprietary components may not be modified, reverse-engineered, decompiled,
+extracted, repackaged as standalone tooling, used to create competing
+tooling/runtimes/viewers/services/language implementations, or used in
+production outside an agreement with Leapter GmbH.
+
+See `LICENSES.md`, `.leapter-tools/LICENSE`, and
+`packages/runtime-browser/LICENSE` for additional license details.

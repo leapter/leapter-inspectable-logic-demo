@@ -6,13 +6,15 @@ scripts (`leapter` for Unix, `leapter.cmd` for Windows) prefer the local
 
 ## Update
 
-Download the latest bundle from the release:
+Maintainer-only: download the latest bundle from the release:
 
 ```bash
 gh release download cli-latest --repo leapter/genielabs --pattern "leapter-cli.cjs" --dir .leapter-tools/cli --clobber
 ```
 
 Release page: https://github.com/leapter/genielabs/releases/tag/cli-latest
+
+Starter users do not need this update step for the included local demo.
 
 ## Dependencies
 
@@ -28,4 +30,5 @@ cd .leapter-tools/cli && npm install
 The bundled Leapter CLI is proprietary Leapter software. It is included so this
 starter can validate, convert, and run the example logic locally without a
 Leapter SaaS account. See `.leapter-tools/LICENSE` for the terms that apply to
-the bundled tooling.
+the bundled tooling, and see `../../LICENSES.md` at the repository root for the
+mixed-license overview.

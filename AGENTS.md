@@ -65,6 +65,13 @@ no runtime server is involved. Do not run `next dev` directly when testing
 the full flow; the converter watcher needs to be running so the JSON stays
 in sync with your `.vts` edits.
 
+The bundled CLI/converter, browser runtime, and VS Code viewer are licensed
+for local development, evaluation, testing, CI, and non-production demos only.
+Do not deploy `@leapter/runtime-browser` as part of a production app unless a
+Leapter agreement permits it. For production, use Leapter-hosted runtime or
+another agreed runtime/export path, and remove or replace the proprietary
+local tooling from the deployed artifact.
+
 ## Preserve Glass Mode
 
 Glass Mode is the in-browser logic inspector. It is core to the starter.
