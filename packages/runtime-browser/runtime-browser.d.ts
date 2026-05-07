@@ -25,18 +25,30 @@ export interface RuntimeResponse {
   runtimeErrors: Array<{ title: string; detail: string }>;
 }
 
-export type BlueprintLibrary =
-  | Record<string, LogicFlowModel>
-  | Map<string, LogicFlowModel>;
+export interface Manifest {
+  project: { id: string; label: string };
+  blueprints: Array<{
+    slug: string;
+    modelId: string;
+    label: string;
+    jsonPath?: string;
+    helpers?: Array<{ modelId: string; label: string; jsonPath: string }>;
+  }>;
+}
+
+export interface Project {
+  manifest: Manifest;
+  models: Record<string, LogicFlowModel>;
+  helpers?: LogicFlowModel[];
+}
 
 export interface RunBlueprintOptions {
-  library?: BlueprintLibrary;
-  appId?: string;
   logger?: RuntimeLogger;
 }
 
 export function runBlueprint(
-  model: LogicFlowModel,
+  project: Project,
+  blueprintSlug: string,
   input: Record<string, unknown>,
   options?: RunBlueprintOptions,
 ): Promise<RuntimeResponse>;
@@ -46,17 +58,7 @@ export interface BlueprintDescription {
   output: Record<string, unknown>;
 }
 
-export function describeBlueprint(model: LogicFlowModel): BlueprintDescription;
-
-export function initializeQuickJS(): Promise<void>;
-
-export class MapBasedBlueprintResolver {
-  constructor(blueprints: BlueprintLibrary);
-}
-
-export class LogicRuntime {
-  static readonly BROWSER_DEFAULTS: unknown;
-  static readonly SERVER_DEFAULTS: unknown;
-  constructor(options?: unknown, resolver?: unknown, logger?: RuntimeLogger);
-  execute(model: LogicFlowModel, input: Record<string, unknown>, appId?: string): RuntimeResponse;
-}
+export function describeBlueprint(
+  project: Project,
+  blueprintSlug: string,
+): BlueprintDescription;

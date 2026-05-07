@@ -27,8 +27,13 @@ export interface LeapterClient {
   /** Check if the runtime is reachable and a specific blueprint exists. */
   checkConnection(modelSlug: string): Promise<ConnectionStatus>;
 
-  /** Fetch the parsed model JSON for a given model ID or slug. */
-  getModel(modelId: string): Promise<ModelDefinition>;
+  /**
+   * Fetch the parsed model JSON. Accepts either a model UUID or a slug;
+   * slugs are resolved to UUIDs via the runtime's OpenAPI spec the same
+   * way `run()` does, so callers don't need to know the URL conventions
+   * of remote runtimes.
+   */
+  getModel(slugOrId: string): Promise<ModelDefinition>;
 
   /** The resolved configuration (frozen). */
   readonly config: Readonly<LeapterClientConfig>;
@@ -200,8 +205,20 @@ export function createLeapterClient(
       }
     },
 
-    async getModel(modelId: string): Promise<ModelDefinition> {
+    async getModel(slugOrId: string): Promise<ModelDefinition> {
       const headers = buildHeaders();
+
+      // Mirror run()'s slug resolution. Local runtimes accept slugs in
+      // the URL, so getModelId is a no-op there. Remote runtimes use
+      // UUIDs in /models/{id} paths, so we translate via the OpenAPI
+      // spec; on resolver failure we fall back to the input as-is so
+      // an already-UUID input still works.
+      let modelId: string;
+      try {
+        modelId = await getModelId(slugOrId, headers);
+      } catch {
+        modelId = slugOrId;
+      }
 
       let res: Response;
       try {
@@ -212,21 +229,22 @@ export function createLeapterClient(
       } catch {
         throw new NetworkError(
           `Cannot reach runtime at ${config.runtimeUrl}`,
-          { modelId },
+          { modelId, slug: slugOrId },
         );
       }
 
       if (!res.ok) {
         const body = await res.text().catch(() => "");
+        const errorOpts = { status: res.status, modelId, slug: slugOrId };
         if (res.status === 404) {
           throw new NotFoundError(
-            `Model "${modelId}" not found: ${body}`,
-            { status: res.status, modelId },
+            `Model "${slugOrId}" not found: ${body}`,
+            errorOpts,
           );
         }
         throw new LeapterError(
-          `Failed to fetch model "${modelId}" (${res.status}): ${body}`,
-          { status: res.status, modelId },
+          `Failed to fetch model "${slugOrId}" (${res.status}): ${body}`,
+          errorOpts,
         );
       }
 

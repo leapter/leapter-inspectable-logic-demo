@@ -70,13 +70,19 @@ export function LogicReplayPanel({
     return () => clearTimeout(t);
   }, [runId, viewerReady]);
 
-  // Load the viewer bundle + model JSON once per modelId. New runs against
-  // the same model reuse the mounted viewer — only the `trace` attribute
-  // changes — so the viewer's internal state stays intact across recalcs.
+  // Load the viewer bundle + model JSON. In production, fetch once per
+  // modelId — new runs against the same model reuse the mounted viewer
+  // and only the `trace` attribute changes, so the viewer's internal
+  // state stays intact across recalcs. In development, refetch on every
+  // new run (keyed by runId) so edits to the `.vts` source show up in
+  // the viewer without a page refresh; the viewer stays mounted across
+  // refetches so only the `model-json` attribute swaps.
   useEffect(() => {
     if (!modelId) return;
-    if (loadedForModel.current === modelId) return;
-    loadedForModel.current = modelId;
+    const isDev = process.env.NODE_ENV !== "production";
+    const cacheKey = isDev ? `${modelId}@${runId ?? ""}` : modelId;
+    if (loadedForModel.current === cacheKey) return;
+    loadedForModel.current = cacheKey;
 
     setLoading(true);
     setLoadError(null);
@@ -86,7 +92,7 @@ export function LogicReplayPanel({
       fetchModelDefinition({ projectSlug, projectId: localProjectId }, blueprintSlug),
     ])
       .then(([, modelResult]) => {
-        if (loadedForModel.current !== modelId) return;
+        if (loadedForModel.current !== cacheKey) return;
         if (!modelResult.success) {
           setLoadError(modelResult.error);
           return;
@@ -98,7 +104,7 @@ export function LogicReplayPanel({
         setLoadError(err instanceof Error ? err.message : "Failed to load viewer");
       })
       .finally(() => setLoading(false));
-  }, [modelId, blueprintSlug, projectSlug, localProjectId]);
+  }, [modelId, runId, blueprintSlug, projectSlug, localProjectId]);
 
   const traceAttr =
     viewerReady && inputData && outputData && runId && traceData

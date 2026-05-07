@@ -5,7 +5,7 @@
   "scripts": {
     "vscode": "code --install-extension .leapter-tools/leapter-blueprint-viewer.vsix --install-extension anthropic.claude-code && code ./leapter ./leapter/leapter.project",
     "postinstall": "npm ci --prefix .leapter-tools/cli --silent --no-audit --no-fund",
-    "convert:blueprints": ".leapter-tools/cli/leapter convert --project ./leapter --out web/src/leapter-blueprints",
+    "convert:blueprints": ".leapter-tools/cli/leapter convert --project ./leapter --out web/public/blueprints",
     "predev": "pnpm run convert:blueprints",
     "dev": "concurrently --names convert,app --prefix-colors blue,green \"pnpm run convert:blueprints --watch\" \"pnpm run dev:app\"",
     "dev:app": "pnpm --filter web dev --port 4000",

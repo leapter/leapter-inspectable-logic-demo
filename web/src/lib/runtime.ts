@@ -3,9 +3,10 @@
 /**
  * Unified blueprint client that branches on the project's runtime mode:
  *
- *   - "local"  → execute in-browser via @leapter/runtime-browser using
- *               the precompiled LogicFlowModel JSON written by
- *               `pnpm convert:blueprints`.
+ *   - "local"  → execute in-browser via @leapter/runtime-browser. The
+ *               compiled `Project` (manifest + per-blueprint JSON) is
+ *               fetched from `/blueprints/...`, written there at build
+ *               time by `pnpm convert:blueprints`.
  *   - "remote" → call the existing Server Actions over HTTP, untouched.
  *
  * Each function mirrors the corresponding Server Action's return shape
@@ -15,7 +16,7 @@
 import {
   describeBlueprint as describeInBrowser,
   runBlueprint as runInBrowser,
-  type LogicFlowModel,
+  type Project,
 } from "@leapter/runtime-browser";
 
 import {
@@ -28,50 +29,97 @@ import type { ConnectionStatus, ModelDefinition, TraceData } from "@leapter/clie
 
 import { getClientConfig, getProjectConfig } from "./runtime-config";
 
-interface BlueprintManifest {
-  blueprints: { slug: string; modelId?: string }[];
-}
-
-/**
- * Lazy-load the manifest. Both the manifest and per-blueprint JSON live
- * under the gitignored `web/src/leapter-blueprints/` dir, populated by
- * `pnpm convert:blueprints`. Loading lazily means a fresh checkout can
- * run `pnpm check-types` (or any tooling that doesn't go through
- * `predev` / `build`) before the convert step has produced output.
- */
-async function loadManifest(): Promise<BlueprintManifest> {
-  try {
-    const mod = await import("@/leapter-blueprints/manifest.json");
-    return (mod.default ?? mod) as BlueprintManifest;
-  } catch {
-    return { blueprints: [] };
-  }
-}
-
 interface RuntimeContext {
-  /** Project slug - used to look up the runtime mode in localStorage. */
+  /** Project slug — used to look up the runtime mode in localStorage. */
   projectSlug: string;
-  /** Project UUID - only needed for remote mode trace links and routing. */
+  /** Project UUID — only needed for remote mode trace links and routing. */
   projectId?: string;
 }
 
 /**
- * Lazy-load a precompiled LogicFlowModel JSON. The dynamic-import template
- * is statically analyzable, so Next.js pre-bundles every JSON file under
- * the directory at build time. Errors here mean `pnpm convert:blueprints`
- * hasn't run or the slug is wrong - surface that, don't silently fall
- * back to remote.
+ * Cache the assembled `Project` (and the manifest alone, for callers that
+ * don't need the full blueprints) in production so we don't refetch on
+ * every call. In dev we always fetch fresh — this is what gives the kit
+ * hot reload on `.vts` saves without a page refresh, since JSON modules
+ * don't HMR cleanly.
  */
-async function loadModel(slug: string): Promise<LogicFlowModel> {
-  try {
-    const mod = await import(`@/leapter-blueprints/${slug}.json`);
-    return (mod.default ?? mod) as LogicFlowModel;
-  } catch {
+let cachedManifest: Promise<Project["manifest"]> | null = null;
+let cachedProject: Promise<Project> | null = null;
+
+async function loadManifest(): Promise<Project["manifest"]> {
+  if (process.env.NODE_ENV !== "production") {
+    return fetchManifest();
+  }
+  // Drop the memoized promise on failure so a transient error
+  // (e.g. mid-deploy stale CDN cache) doesn't pin the page to a
+  // broken state until a hard refresh.
+  return (cachedManifest ??= fetchManifest().catch((err) => {
+    cachedManifest = null;
+    throw err;
+  }));
+}
+
+async function loadProject(): Promise<Project> {
+  if (process.env.NODE_ENV !== "production") {
+    return fetchProject();
+  }
+  // Also drop the manifest cache: a stale CDN-cached manifest
+  // pointing at jsonPaths that no longer exist would otherwise keep
+  // failing the same way on every retry.
+  return (cachedProject ??= fetchProject().catch((err) => {
+    cachedProject = null;
+    cachedManifest = null;
+    throw err;
+  }));
+}
+
+async function fetchManifest(): Promise<Project["manifest"]> {
+  const cacheMode =
+    process.env.NODE_ENV === "production" ? "default" : "no-store";
+  const res = await fetch("/blueprints/manifest.json", { cache: cacheMode });
+  if (!res.ok) {
     throw new Error(
-      `Blueprint "${slug}" not found in compiled output. ` +
-        `Run \`pnpm convert:blueprints\` to convert blueprints.`,
+      `Failed to load blueprint manifest. ` +
+        `Run \`pnpm convert:blueprints\` to generate it.`,
     );
   }
+  return res.json();
+}
+
+async function fetchProject(): Promise<Project> {
+  const cacheMode =
+    process.env.NODE_ENV === "production" ? "default" : "no-store";
+  // Reuse loadManifest so the prod manifest cache is shared.
+  const manifest = await loadManifest();
+  const modelEntries = await Promise.all(
+    manifest.blueprints.map(async (b) => {
+      const res = await fetch(`/blueprints/${b.jsonPath ?? `${b.slug}.json`}`, {
+        cache: cacheMode,
+      });
+      if (!res.ok) {
+        throw new Error(`Failed to load blueprint "${b.slug}".`);
+      }
+      return [b.slug, await res.json()] as const;
+    }),
+  );
+  const helpers = await Promise.all(
+    manifest.blueprints.flatMap((b) =>
+      (b.helpers ?? []).map(async (h) => {
+        const res = await fetch(`/blueprints/${h.jsonPath}`, {
+          cache: cacheMode,
+        });
+        if (!res.ok) {
+          throw new Error(`Failed to load helper blueprint "${h.jsonPath}".`);
+        }
+        return res.json();
+      }),
+    ),
+  );
+  return {
+    manifest,
+    models: Object.fromEntries(modelEntries),
+    ...(helpers.length > 0 ? { helpers } : {}),
+  };
 }
 
 function isLocal(ctx: RuntimeContext): boolean {
@@ -109,13 +157,16 @@ export async function runBlueprint(
   }
 
   try {
-    const model = await loadModel(blueprintSlug);
-    const response = await runInBrowser(model, input);
+    const project = await loadProject();
+    const response = await runInBrowser(project, blueprintSlug, input);
+    const entry = project.manifest.blueprints.find(
+      (b) => b.slug === blueprintSlug,
+    );
     return {
       success: true,
       data: response.outputData,
       runId: response.runId,
-      modelId: model.id,
+      modelId: entry?.modelId,
       // The browser runtime's TraceData shape matches what the HTTP
       // runtime returns; pass it through untyped so consumers don't
       // have to import two near-identical interfaces.
@@ -140,17 +191,29 @@ export async function fetchModelDefinition(
   blueprintSlug: string,
 ): Promise<ModelDefinitionResult> {
   if (!isLocal(ctx)) {
-    // Remote uses modelId, but the slug→modelId mapping lives in our
-    // local manifest too - look it up so callers don't need to track it.
-    const manifest = await loadManifest();
-    const entry = manifest.blueprints.find((b) => b.slug === blueprintSlug);
-    const modelIdOrSlug = entry?.modelId ?? blueprintSlug;
-    return fetchRemote(modelIdOrSlug, override(ctx));
+    // Remote uses modelId; pull it from the manifest if we have one so
+    // callers can keep working in slugs. The manifest is a *local*
+    // build artefact (`pnpm convert:blueprints`), so on a fresh
+    // checkout or in a remote-only deployment it may be missing —
+    // fall back to the slug, which the server action also accepts.
+    let entry: { modelId?: string } | undefined;
+    try {
+      const manifest = await loadManifest();
+      entry = manifest.blueprints.find((b) => b.slug === blueprintSlug);
+    } catch {
+      // Manifest unavailable in this deployment; remote can still
+      // resolve by slug below.
+    }
+    return fetchRemote(entry?.modelId ?? blueprintSlug, override(ctx));
   }
 
   try {
-    const model = (await loadModel(blueprintSlug)) as unknown as ModelDefinition;
-    return { success: true, model };
+    const project = await loadProject();
+    const model = project.models[blueprintSlug];
+    if (!model) {
+      return { success: false, error: `Blueprint "${blueprintSlug}" not found.` };
+    }
+    return { success: true, model: model as unknown as ModelDefinition };
   } catch (err) {
     return {
       success: false,
@@ -169,8 +232,8 @@ export async function checkBlueprint(
     return checkRemote(blueprintSlug, override(ctx));
   }
 
-  // Local mode: blueprint exists if it's in the precompiled manifest.
-  // No network, no errors to report - the runtime is the page itself.
+  // Local mode: blueprint exists if it's in the loaded manifest.
+  // Manifest-only — no need to fetch every blueprint just to list slugs.
   const manifest = await loadManifest();
   const slugs = manifest.blueprints.map((b) => b.slug);
   return {
@@ -196,8 +259,8 @@ export async function describeBlueprintInputs(
   }
 
   try {
-    const model = await loadModel(blueprintSlug);
-    const description = describeInBrowser(model);
+    const project = await loadProject();
+    const description = describeInBrowser(project, blueprintSlug);
     const input = description.input as { properties?: Record<string, unknown> };
     return {
       success: true,
