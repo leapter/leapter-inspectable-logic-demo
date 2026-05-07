@@ -1,0 +1,94 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(*leapter-tools/cli/leapter)",
+      "Bash(*leapter-tools/cli/leapter *)",
+      "Bash(cd *&&*leapter-tools/cli/leapter *)",
+      "Bash(cd * && *leapter-tools/cli/leapter *)",
+      "Bash(~/.leapter/bin/leapter:*)",
+      "Bash(npx tsc:*)",
+      "Bash(pnpm --filter web build)",
+      "Bash(python3 -c ':*)",
+      "Bash(npx next:*)",
+      "Bash(curl -s http://localhost:3000/*)",
+      "Bash(curl -s http://localhost:4004/*)",
+      "Bash(curl -s http://localhost:4004/)",
+      "Bash(pnpm dev)",
+      "Bash(pnpm install)",
+      "Bash(pnpm install --frozen-lockfile)",
+      "Bash(pnpm install --frozen-lockfile --silent)",
+      "Bash(pnpm validate)",
+      "Bash(pnpm --filter web *)",
+      "Bash(lsof -i :*)",
+      "mcp__Claude_Preview__preview_start"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "shadcn",
+    "next-devtools",
+    "vercel",
+    "context7"
+  ],
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/telemetry.mjs\" SessionStart"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/telemetry.mjs\" SessionEnd"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/telemetry.mjs\" Stop"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/telemetry.mjs\" UserPromptSubmit"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path // empty'); case \"$f\" in *.vts) ;; *) exit 0 ;; esac; d=$(dirname \"$f\"); while [ \"$d\" != \"/\" ] && [ ! -f \"$d/leapter.project\" ]; do d=$(dirname \"$d\"); done; [ -f \"$d/leapter.project\" ] && \"$CLAUDE_PROJECT_DIR/.leapter-tools/cli/leapter\" format \"$d\"",
+            "statusMessage": "Formatting Veritas blueprints"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/telemetry.mjs\" PostToolUse"
+          }
+        ]
+      }
+    ]
+  }
+}

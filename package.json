@@ -1,0 +1,21 @@
+{
+  "name": "leapter-inspectable-logic-demo",
+  "private": true,
+  "license": "SEE LICENSE IN ./LICENSE",
+  "scripts": {
+    "vscode": "code --install-extension .leapter-tools/leapter-blueprint-viewer.vsix --install-extension anthropic.claude-code && code ./leapter ./leapter/leapter.project",
+    "postinstall": "npm ci --prefix .leapter-tools/cli --silent --no-audit --no-fund",
+    "convert:blueprints": ".leapter-tools/cli/leapter convert --project ./leapter --out web/public/blueprints",
+    "predev": "pnpm run convert:blueprints",
+    "dev": "concurrently --names convert,app --prefix-colors blue,green \"pnpm run convert:blueprints --watch\" \"pnpm run dev:app\"",
+    "dev:app": "pnpm --filter web dev --port 4000",
+    "dev:runtime": ".leapter-tools/cli/leapter runtime serve --path ./leapter --port 4004",
+    "build": "pnpm run convert:blueprints && pnpm --filter web build",
+    "lint": "pnpm --filter web lint",
+    "validate": "cd leapter && ../.leapter-tools/cli/leapter validate",
+    "push": "cd leapter && ../.leapter-tools/cli/leapter push"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

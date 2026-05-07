@@ -1,0 +1,10 @@
+{
+  "leapFormat": 1,
+  "app": {
+    "id": "180269b6-971b-4c2b-b68f-3a387afb5ec3",
+    "label": "Pizza Pricing Calculator",
+    "description": "Calculates pizza prices based on size, toppings, and crust — powered by Leapter"
+  },
+  "version": "1.0.0",
+  "main": "pizza-pricing"
+}
