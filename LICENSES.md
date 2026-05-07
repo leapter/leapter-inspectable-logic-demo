@@ -96,7 +96,8 @@ deployment target.
 
 ## Open-Source Posture
 
-Please do not describe the whole starter or the Leapter platform as open
-source. The starter includes MIT-covered files and proprietary Leapter beta
-tooling. Leapter is still deciding the long-term open-source shape of Veritas,
+The MIT-covered starter files are open source under the MIT License. The
+bundled Leapter beta tooling, runtime, viewer, and Leapter brand assets remain
+proprietary. The Leapter platform is not covered by this repository license.
+Leapter is still deciding the long-term licensing/open-source shape of Veritas,
 local runtime, and viewer tooling.

@@ -45,7 +45,7 @@ export default function Home() {
               leapter.com
             </a>
             <a
-              href="https://github.com/leapter/leapter-starter-nextjs"
+              href="https://github.com/leapter/leapter-inspectable-logic-demo"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"

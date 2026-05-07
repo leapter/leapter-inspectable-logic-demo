@@ -17,7 +17,7 @@ In this repo, business logic lives in **Veritas** files: text-based logic files 
 The included example is a pizza pricing calculator. Change the size, toppings, crust, or day of week, then click **Show Logic** to see the exact logic path that produced the result.
 
 ```bash
-git clone https://github.com/leapter/leapter-starter-nextjs.git my-app
+git clone https://github.com/leapter/leapter-inspectable-logic-demo.git my-app
 cd my-app
 pnpm install
 ```
@@ -199,7 +199,7 @@ backwards-compatibility commitment.
 ## Project Structure
 
 ```text
-leapter-starter-nextjs/
+leapter-inspectable-logic-demo/
 ├── requirements/          Business rules and specs, used as input for the agent
 ├── leapter/               Veritas project: executable business logic
 │   ├── leapter.project
@@ -361,7 +361,7 @@ What is working here:
 What is still evolving:
 
 - the best UX for bringing literate specifications, visual diagrams, AI edits, tests, and review comments together in the web editor
-- the exact open-source shape of Veritas, the viewer, and runtime pieces
+- the long-term licensing/open-source shape of Veritas, the viewer, and runtime pieces
 - more example projects beyond the starter
 - smoother support across coding agents
 
@@ -375,7 +375,7 @@ Especially useful:
 - teams with pricing, eligibility, reimbursement, compliance, or scoring rules
 - people who own rules but do not want to review implementation code
 - developers who have had to translate business rules back and forth between stakeholders and source code
-- people with opinions on what our open-source strategy should be
+- people with opinions on what our licensing/open-source strategy should be
 
 Open an issue, start a discussion, or tell us what breaks.
 
@@ -457,9 +457,9 @@ validates, converts, views, executes, or traces them.
 The included pizza-pricing Veritas file is an example you can copy, modify, and
 use under the starter's MIT license.
 
-We are still deciding the long-term open-source shape of Veritas, local
-runtime, and viewer tooling. For now, please do not describe the whole starter
-or Leapter platform as open source.
+The MIT-covered starter files are open source under the MIT License. The
+bundled Leapter beta tooling, runtime, viewer, and Leapter brand assets remain
+proprietary. The Leapter platform is not covered by this repository license.
 
 See [LICENSE](LICENSE), [.leapter-tools/LICENSE](.leapter-tools/LICENSE), and
 [packages/runtime-browser/LICENSE](packages/runtime-browser/LICENSE) for the

@@ -1,4 +1,4 @@
-# Leapter Starter (Next.js)
+# Leapter Inspectable Logic Demo (Next.js)
 
 This is a **demo application template**. The included app (Pizza Pricing Calculator)
 is just an **example** — it exists to show the architecture and will be **replaced entirely**
@@ -350,7 +350,7 @@ cd web && vercel deploy --prod
 ## Project Structure
 
 ```
-leapter-starter-nextjs/
+leapter-inspectable-logic-demo/
 ├── CLAUDE.md                          ← You are here
 ├── STYLEGUIDE.md                      ← Visual identity (colors, fonts, components)
 ├── requirements/                      ← Business rules & specs (input for Claude)
