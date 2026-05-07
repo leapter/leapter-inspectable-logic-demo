@@ -149,7 +149,7 @@ Based on what's missing, suggest the most useful next action:
 | No requirements | Offer both paths (see below) |
 | Requirements without blueprints | "I see `requirements/<name>`. Want me to read it and start building?" |
 | Blueprints without UI | "Blueprints are ready. Want me to create the web UI?" |
-| Everything exists | "The app looks complete. Want to test locally, make changes, or discuss the production path?" |
+| Everything exists | "The app looks complete. Want to test locally, make changes, or deploy?" |
 | Dependencies not installed | "Run `cd web && pnpm install` first, then we can start" |
 
 ### When no requirements exist: Two paths
@@ -211,7 +211,7 @@ What would you like to do?
   c) Open VS Code with blueprint viewer (pnpm code:open)
   d) Test an existing blueprint locally
   e) Start the dev server and preview the app
-  f) Discuss production path (requires a Leapter agreement/runtime choice)
+  f) Deploy to production (browser runtime, or push blueprints for hosted runtime)
   g) Something else — just tell me
 ```
 
@@ -225,7 +225,7 @@ Workflow:
   2. I create Leapter blueprints (business logic) and validate them
   3. I build a tailored Next.js UI with shadcn/ui components
   4. Test locally:  pnpm dev  (one process - converter watcher + Next.js)
-  5. Production:    requires an agreed Leapter runtime/deployment path
+  5. Deploy:        cd web && vercel deploy  (optional: pnpm push for hosted runtime/API)
 ```
 
 And mention the key skills available:

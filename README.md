@@ -70,7 +70,7 @@ Leapter changes the artifact. Instead of hiding business logic in TypeScript, Py
 - read as a structured specification
 - rendered as a visual program
 - edited in a diagram editor with AI support
-- executed through an approved production runtime path
+- executed through a permitted production runtime path
 - tested with ordinary inputs and outputs
 - traced step by step
 - versioned and reviewed like software
@@ -182,13 +182,19 @@ The larger Leapter model is runtime-flexible: the same logic can be used through
 
 For this starter, no Leapter SaaS account is required to validate and execute the included Blueprint. Pushing the Blueprint to Leapter Lab is optional and gives you the web-based diagram editor, AI-assisted editing, shared project workspace, visual review tools, and hosted runtime options. Login is only needed for account-bound capabilities such as API keys, hosted MCP/API execution, and production trace retention.
 
-Production note: the bundled CLI/converter, browser runtime, and VS Code
-Blueprint viewer are included for local development, evaluation, testing, CI,
-and non-production demos only. For production, use Leapter-hosted runtime or
-another runtime/export path under an agreement with Leapter GmbH, or
-remove/replace the proprietary runtime pieces. Do not deploy
-`@leapter/runtime-browser` as part of a production app unless your agreement
-permits it.
+Production note: you may deploy applications and business-logic artifacts
+created with this starter, including apps that use the bundled Leapter beta
+runtime/tooling as part of the starter workflow. The proprietary Leapter
+runtime, CLI/converter, and viewer may not be modified, extracted, repackaged,
+resold, sublicensed as standalone tooling, or used directly or indirectly to
+develop, train, power, operate, or support any product or service that competes
+with, or is intended to substitute for, Leapter's proprietary tooling, runtime,
+viewer, converter, hosted runtime services, Veritas-compatible language
+implementations, or visual-programming platform. Ordinary bundling,
+minification, caching, containerization, CI packaging, and deployment as part
+of an application created with this starter are permitted. The bundled tooling
+is beta software provided as-is, without warranty, SLA, support commitment, or
+backwards-compatibility commitment.
 
 ## Project Structure
 
@@ -422,9 +428,21 @@ Leapter SaaS account.
 
 You may clone, fork, install, run, cache, and redistribute this starter with
 the proprietary notices intact. You may use the bundled proprietary tooling for
-local development, evaluation, testing, CI, and non-production demos. Production
-use of the proprietary tooling outside an agreement with Leapter GmbH is not
-permitted.
+local development, evaluation, testing, CI, non-production demos, and
+production deployment or execution of applications and business-logic artifacts
+created with this starter.
+
+You may not modify, reverse engineer, decompile, extract, repackage, resell, or
+sublicense the proprietary tooling as standalone tooling or an SDK. You may not
+use it directly or indirectly to develop, train, power, operate, or support any
+product or service that competes with, or is intended to substitute for,
+Leapter's proprietary tooling, runtime, viewer, converter, hosted runtime
+services, Veritas-compatible language implementations, or visual-programming
+platform. Ordinary bundling, minification, caching, containerization, CI
+packaging, and deployment as part of an application created with this starter
+are permitted. The bundled proprietary tooling is beta software provided
+as-is, without warranty, SLA, support commitment, or backwards-compatibility
+commitment.
 
 You own the artifacts you create with this starter, including your
 requirements, Veritas `.logic.vts` files, generated app code, compiled

@@ -44,15 +44,30 @@ with this starter so the included examples can be validated, viewed, converted,
 and executed locally without requiring a Leapter SaaS account.
 
 Those proprietary components may be used with this starter template and with
-the Leapter platform, including local development, evaluation, testing, CI, and
-non-production demo use. You may clone, fork, install, run, cache, and
-redistribute this starter with the proprietary notices intact.
+projects based on this starter, including local development, evaluation,
+testing, CI, non-production demos, and production deployment or execution of
+applications and business-logic artifacts created with this starter. You may
+clone, fork, install, run, cache, and redistribute this starter, and projects
+based on this starter, with the proprietary notices intact.
+
+For clarity, permitted use includes ordinary copying, importing, linking,
+bundling, minification, compression, caching, containerization, CI packaging,
+and deployment of the proprietary components as part of an application or
+project created with this starter, provided the proprietary notices remain
+intact and the components are not offered as standalone tooling or an SDK.
 
 Except to the extent such restrictions are prohibited by applicable law, those
 proprietary components may not be modified, reverse-engineered, decompiled,
-extracted, repackaged as standalone tooling, used to create competing
-tooling/runtimes/viewers/services/language implementations, or used in
-production outside an agreement with Leapter GmbH.
+extracted, repackaged as standalone tooling or an SDK, resold or sublicensed as
+standalone tooling, or used directly or indirectly to develop, train, power,
+operate, or support any product or service that competes with, or is intended
+to substitute for, Leapter's proprietary tooling, runtime, viewer, converter,
+hosted runtime services, Veritas-compatible language implementations, or
+visual-programming platform.
+
+The proprietary components are beta software provided as-is, without warranty,
+support commitment, SLA, compatibility commitment, or obligation to maintain
+backwards compatibility.
 
 See `LICENSES.md`, `.leapter-tools/LICENSE`, and
 `packages/runtime-browser/LICENSE` for additional license details.

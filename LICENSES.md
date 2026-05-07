@@ -38,11 +38,21 @@ Permitted beta uses:
   non-production demos;
 - use the bundled tooling in CI or local automation for this starter;
 - cache or include the bundled tooling as part of ordinary development,
-  evaluation, or non-production demo environments for this starter;
+  evaluation, non-production demo, or production deployment environments for
+  projects based on this starter;
 - create, edit, validate, convert, view, and execute Veritas logic files for
   projects based on this starter;
-- share or redistribute this starter, including modified MIT-covered files, as
-  long as the Leapter proprietary tooling notices remain intact.
+- deploy and execute applications and business-logic artifacts created with
+  this starter, including in production environments;
+- share or redistribute this starter, including modified MIT-covered files and
+  projects based on this starter, as long as the Leapter proprietary tooling
+  notices remain intact.
+
+For clarity, permitted use includes ordinary copying, importing, linking,
+bundling, minification, compression, caching, containerization, CI packaging,
+and deployment of the proprietary components as part of an application or
+project created with this starter, provided the proprietary notices remain
+intact and the components are not offered as standalone tooling or an SDK.
 
 Except to the extent such restrictions are prohibited by applicable law, the
 following uses are not permitted without written permission from Leapter GmbH:
@@ -50,10 +60,16 @@ following uses are not permitted without written permission from Leapter GmbH:
 - modifying the proprietary tooling;
 - reverse engineering, decompiling, or extracting the proprietary tooling;
 - repackaging the proprietary tooling as a standalone product or SDK;
-- using the proprietary tooling to build competing tooling, runtimes, viewers,
-  hosted services, or language implementations;
-- production use of the proprietary tooling outside an agreement with Leapter
-  GmbH.
+- reselling or sublicensing the proprietary tooling as standalone tooling;
+- using the proprietary tooling directly or indirectly to develop, train,
+  power, operate, or support any product or service that competes with, or is
+  intended to substitute for, Leapter's proprietary tooling, runtime, viewer,
+  converter, hosted runtime services, Veritas-compatible language
+  implementations, or visual-programming platform.
+
+The proprietary tooling is beta software provided as-is, without warranty,
+support commitment, SLA, compatibility commitment, or obligation to maintain
+backwards compatibility.
 
 ## User-Created Artifacts
 

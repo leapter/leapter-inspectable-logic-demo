@@ -24,9 +24,18 @@ The app executes the included Blueprint locally in the browser through
 for the demo.
 
 The bundled CLI/converter, browser runtime, and VS Code viewer are proprietary
-Leapter beta tooling licensed for local development, evaluation, testing, CI,
-and non-production demos only. Do not deploy `@leapter/runtime-browser` as part
-of a production app unless a Leapter agreement permits it.
+Leapter beta tooling. You may deploy applications created with this starter,
+including applications that use the bundled browser runtime as part of the
+starter workflow. Do not modify, extract, repackage, resell, sublicense, or use
+the proprietary tooling/runtime/viewer directly or indirectly to develop,
+train, power, operate, or support any product or service that competes with, or
+is intended to substitute for, Leapter's proprietary tooling, runtime, viewer,
+converter, hosted runtime services, Veritas-compatible language
+implementations, or visual-programming platform. Ordinary bundling,
+minification, caching, containerization, CI packaging, and deployment as part
+of an application created with this starter are permitted. The bundled tooling
+is beta software provided as-is, without warranty, SLA, support commitment, or
+backwards-compatibility commitment.
 
 For the full repository overview, see `../README.md`. For license details, see
 `../LICENSES.md`.

@@ -7,12 +7,20 @@ Leapter GmbH. It is bundled with the Leapter Starter template so the included
 examples can be executed locally in the browser without requiring a Leapter
 SaaS account.
 
-You may use this software with the Leapter Starter template and with the
-Leapter platform, including local development, evaluation, testing, CI, and
-non-production demo use. You may clone, fork, install, run, cache, and
-redistribute the Leapter Starter template, including forks or modifications of
-MIT-covered starter files, with this license notice and the other Leapter
-proprietary notices intact.
+You may use this software with the Leapter Starter template and with projects
+based on this starter, including local development, evaluation, testing, CI,
+non-production demo use, and production deployment or execution of applications
+and business-logic artifacts created with this starter. You may clone, fork,
+install, run, cache, and redistribute the Leapter Starter template, including
+forks or modifications of MIT-covered starter files and projects based on this
+starter, with this license notice and the other Leapter proprietary notices
+intact.
+
+For clarity, permitted use includes ordinary copying, importing, linking,
+bundling, minification, compression, caching, containerization, CI packaging,
+and deployment of this software as part of an application or project created
+with this starter, provided the proprietary notices remain intact and this
+software is not offered as standalone tooling or an SDK.
 
 Except to the extent such restrictions are prohibited by applicable law, you
 may NOT modify, reverse-engineer, decompile, extract, repackage, or create
@@ -26,9 +34,16 @@ included by the user, users own their user-created artifacts, including
 `.logic.vts` files, generated app code, compiled Blueprint JSON, test cases,
 local traces, screenshots, and project documentation.
 
-You may NOT use this software to build competing tooling, runtimes, viewers,
-hosted services, or language implementations. Production use outside an
-agreement with Leapter GmbH is not permitted.
+You may NOT repackage, resell, or sublicense this software as standalone
+tooling or an SDK. You may NOT use this software directly or indirectly to
+develop, train, power, operate, or support any product or service that competes
+with, or is intended to substitute for, Leapter's proprietary tooling, runtime,
+viewer, converter, hosted runtime services, Veritas-compatible language
+implementations, or visual-programming platform.
+
+This software is beta software provided as-is, without warranty, support
+commitment, SLA, compatibility commitment, or obligation to maintain backwards
+compatibility.
 
 This software includes or depends on third-party open-source components. See
 ../../THIRD_PARTY_NOTICES.md for bundled third-party notices identified in this
