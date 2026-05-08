@@ -54,25 +54,9 @@ export function DebugPortal({
       </div>
 
       <div
-        role={pressable ? "button" : undefined}
-        tabIndex={pressable ? 0 : undefined}
-        onClick={pressable ? onAudit : undefined}
-        onKeyDown={
-          pressable
-            ? (e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  onAudit();
-                }
-              }
-            : undefined
-        }
-        aria-label={pressable ? "See how this was calculated" : undefined}
         className={cn(
-          "group relative block w-full overflow-hidden outline-none",
+          "relative block w-full overflow-hidden",
           "p-6 space-y-6",
-          "focus-visible:ring-2 focus-visible:ring-[color:var(--app-accent)] focus-visible:ring-offset-2",
-          pressable ? "cursor-pointer" : "cursor-default",
         )}
         style={{
           borderRadius: "calc(var(--radius-2xl) - 1.5px)",
@@ -96,23 +80,26 @@ export function DebugPortal({
 
           {pressable && (
             <div className="flex justify-center pt-1">
-              <span
+              <button
+                type="button"
+                onClick={onAudit}
                 className={cn(
-                  "inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5",
+                  "group inline-flex min-h-11 items-center gap-2 rounded-full border px-3.5 py-1.5",
                   "text-xs font-medium",
                   "border-transparent text-muted-foreground bg-transparent",
                   "transition-all duration-300 ease-out",
-                  "group-hover:border-[#FA4B00]/30 group-hover:text-[#FA4B00]",
-                  "group-hover:bg-gradient-to-br group-hover:from-[#FA4B00]/10 group-hover:to-[#968DF6]/10",
-                  "group-hover:shadow-[0_4px_18px_-6px_rgba(250,75,0,0.35)]",
+                  "hover:border-[#FA4B00]/30 hover:text-[#FA4B00]",
+                  "hover:bg-gradient-to-br hover:from-[#FA4B00]/10 hover:to-[#968DF6]/10",
+                  "hover:shadow-[0_4px_18px_-6px_rgba(250,75,0,0.35)]",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--app-accent)] focus-visible:ring-offset-2",
                 )}
               >
                 <Workflow className="h-3.5 w-3.5" />
                 <span>See how this was calculated</span>
-                <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
+                <span className="inline-block transition-transform duration-300 group-hover:translate-x-1 group-focus-visible:translate-x-1">
                   →
                 </span>
-              </span>
+              </button>
             </div>
           )}
         </div>
