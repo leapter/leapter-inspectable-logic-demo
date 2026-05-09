@@ -15,7 +15,7 @@ starts Next.js on `http://localhost:4000`.
 
 Avoid running `next dev` directly while testing the full flow. Without the root
 watcher, edited `.logic.vts` files will not be compiled into
-`src/leapter-blueprints/`.
+`public/blueprints/`, which Next.js serves at `/blueprints/...`.
 
 ## Runtime
 
