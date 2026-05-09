@@ -102,14 +102,17 @@ export function getClientConfig(
  * local mode the run only exists in the browser, so we return null and
  * callers omit the link.
  *
- * Format: {labBase}/home/projects/{projectId}/models/{modelId}#runs-{runId}
+ * Format: {labBase}/home/projects/{projectId}#runs-{runId}
  */
 export function buildTraceUrl(
   slug: string,
   runId: string,
-  modelId: string,
+  _modelId: string,
   _localProjectId?: string,
 ): string | null {
+  void _modelId;
+  void _localProjectId;
+
   const config = getProjectConfig(slug);
 
   if (config.mode !== "remote" || !config.remoteUrl || !config.labUrl) {
@@ -120,5 +123,5 @@ export function buildTraceUrl(
   const projectId = segments[segments.length - 1];
   if (!projectId) return null;
   const labBase = config.labUrl.replace(/\/$/, "");
-  return `${labBase}/home/projects/${projectId}/models/${modelId}#runs-${runId}`;
+  return `${labBase}/home/projects/${projectId}#runs-${runId}`;
 }

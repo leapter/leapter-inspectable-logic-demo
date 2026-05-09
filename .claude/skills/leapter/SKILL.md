@@ -126,7 +126,7 @@ leapter validate <file.vts>                     # Validate a single file
 leapter validate <dir>                          # Validate all .vts files in directory
 leapter convert                                 # Convert blueprints to LogicFlowModel JSON for in-browser execution
 leapter convert --watch                         # Reconvert on every .vts change (pair with `next dev`)
-leapter convert --out web/src/leapter-blueprints  # Custom output dir
+leapter convert --project ./leapter --out web/public/blueprints  # Starter output dir
 leapter runtime run --model <slug> --input '{}' # Execute blueprint locally
 leapter runtime run --model <slug> --file in.json  # Execute with input from file
 leapter runtime run --model <slug> --input '{}' --trace  # Stream trace/log events to stderr
@@ -354,14 +354,17 @@ blueprint to a `LogicFlowModel` JSON file and execute in-browser via
 `@leapter/runtime-browser`:
 
 ```bash
-leapter convert                                    # walks logic/, writes dist/blueprints/
-leapter convert --out web/src/leapter-blueprints   # custom output dir
-leapter convert --watch                            # recompile on every .vts save (pair with `next dev`)
+leapter convert                                      # generic default: walks logic/, writes dist/blueprints/
+.leapter-tools/cli/leapter convert --project ./leapter --out web/public/blueprints
+pnpm run convert:blueprints --watch                  # starter watcher: recompile on every .vts save
 ```
 
 Output: `<out>/<slug>.json` per blueprint plus a `manifest.json`
-(project info + slug → modelId index). The runtime-browser package
-imports those JSON files and executes them via a QuickJS WASM sandbox.
+(project info + slug → modelId index). In this starter, `<out>` is
+`web/public/blueprints/`, which Next.js serves at `/blueprints/...`.
+The app fetches the compiled JSON from `/blueprints/`, assembles a
+Project object, and passes it to `@leapter/runtime-browser`, which
+executes it via a QuickJS WASM sandbox.
 No runtime server, no localhost ports beyond your own dev server.
 
 **Alternative - HTTP runtime server.** If you have a non-browser
