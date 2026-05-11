@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2, X } from "lucide-react";
 import Image from "next/image";
-import { fetchModelDefinition } from "@/lib/runtime";
+import { fetchModelDefinition, loadProjectExport } from "@/lib/runtime";
 import { loadViewerScript } from "@/lib/load-viewer";
 import { buildModelInvocation } from "@/lib/viewer-types";
+import { useRuntimeStore } from "@/lib/runtime-config";
 import { LogicViewerEmbed } from "./logic-viewer-embed";
 import type { TraceData } from "@leapter/client";
 
@@ -43,6 +44,7 @@ export function LogicReplayPanel({
   onClose,
 }: LogicReplayPanelProps) {
   const [modelJson, setModelJson] = useState<string | null>(null);
+  const [projectJson, setProjectJson] = useState<string | null>(null);
   const [viewerReady, setViewerReady] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -54,6 +56,9 @@ export function LogicReplayPanel({
     firstRunId.current = runId;
   }
   const isFirstRun = runId !== undefined && runId === firstRunId.current;
+  const runtimeMode = useRuntimeStore(
+    (s) => s.configs[projectSlug]?.mode ?? "local",
+  );
 
   // Shade out / shade in on every new run after the first — the trace
   // attribute updates while the viewer is dim, then fades back to full
@@ -70,13 +75,18 @@ export function LogicReplayPanel({
     return () => clearTimeout(t);
   }, [runId, viewerReady]);
 
-  // Load the viewer bundle + model JSON. In production, fetch once per
+  // Load the viewer bundle + payload. In production, fetch once per
   // modelId — new runs against the same model reuse the mounted viewer
   // and only the `trace` attribute changes, so the viewer's internal
   // state stays intact across recalcs. In development, refetch on every
   // new run (keyed by runId) so edits to the `.vts` source show up in
   // the viewer without a page refresh; the viewer stays mounted across
-  // refetches so only the `model-json` attribute swaps.
+  // refetches so only the payload attribute swaps.
+  //
+  // Local mode feeds a full project (manifest + every blueprint) so the
+  // viewer can resolve cross-blueprint trace references. Remote mode
+  // only has the single model definition reachable through the runtime
+  // API, so it falls back to single-blueprint mode.
   useEffect(() => {
     if (!modelId) return;
     const isDev = process.env.NODE_ENV !== "production";
@@ -87,24 +97,42 @@ export function LogicReplayPanel({
     setLoading(true);
     setLoadError(null);
 
-    Promise.all([
-      loadViewerScript(),
-      fetchModelDefinition({ projectSlug, projectId: localProjectId }, blueprintSlug),
-    ])
-      .then(([, modelResult]) => {
+    const payloadPromise =
+      runtimeMode === "local"
+        ? loadProjectExport(blueprintSlug).then((p) => ({
+            kind: "project" as const,
+            value: p,
+          }))
+        : fetchModelDefinition(
+            { projectSlug, projectId: localProjectId },
+            blueprintSlug,
+          ).then((r) =>
+            r.success
+              ? { kind: "model" as const, value: r.model }
+              : { kind: "error" as const, value: r.error },
+          );
+
+    Promise.all([loadViewerScript(), payloadPromise])
+      .then(([, payload]) => {
         if (loadedForModel.current !== cacheKey) return;
-        if (!modelResult.success) {
-          setLoadError(modelResult.error);
+        if (payload.kind === "error") {
+          setLoadError(payload.value);
           return;
         }
-        setModelJson(utf8ToBase64(JSON.stringify(modelResult.model)));
+        if (payload.kind === "project") {
+          setProjectJson(utf8ToBase64(JSON.stringify(payload.value)));
+          setModelJson(null);
+        } else {
+          setModelJson(utf8ToBase64(JSON.stringify(payload.value)));
+          setProjectJson(null);
+        }
         setViewerReady(true);
       })
       .catch((err: unknown) => {
         setLoadError(err instanceof Error ? err.message : "Failed to load viewer");
       })
       .finally(() => setLoading(false));
-  }, [modelId, runId, blueprintSlug, projectSlug, localProjectId]);
+  }, [modelId, runId, blueprintSlug, projectSlug, localProjectId, runtimeMode]);
 
   const traceAttr =
     viewerReady && inputData && outputData && runId && traceData
@@ -187,7 +215,7 @@ export function LogicReplayPanel({
           </div>
         )}
 
-        {viewerReady && modelJson && (
+        {viewerReady && (modelJson || projectJson) && (
           <div
             className="absolute inset-0 transition-[opacity,transform] duration-[220ms] ease-out will-change-[opacity,transform]"
             style={{
@@ -196,8 +224,11 @@ export function LogicReplayPanel({
             }}
           >
             <LogicViewerEmbed
-              modelJson={modelJson}
+              modelJson={modelJson ?? undefined}
+              projectJson={projectJson ?? undefined}
+              initialBlueprint={projectJson ? blueprintSlug : undefined}
               traceJson={traceAttr ?? undefined}
+              autoMaximize={projectJson ? true : undefined}
               autoplay={isFirstRun}
             />
           </div>

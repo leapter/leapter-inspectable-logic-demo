@@ -122,6 +122,49 @@ async function fetchProject(): Promise<Project> {
   };
 }
 
+// ── Viewer payload (for the trace replay panel) ────────────────────────────
+
+// Shape of @leapter/core-model/projectExport's ProjectExportSchema. The
+// viewer's <leapter-logic-viewer project="..."> attribute parses this with
+// Zod, so we only need a structurally-compatible JSON object.
+export interface ProjectExport {
+  version: string;
+  app: { id?: string; label: string; description?: string };
+  models: Record<string, unknown>[];
+}
+
+// In `logic` mode the viewer wraps the single blueprint into a synthesized
+// project — fine for self-contained models, but trace replay of cross-
+// blueprint calls then can't resolve helpers and the value renderer chokes
+// on structured inputs (React #31). For local-mode runs we therefore feed
+// the viewer a real project payload built from every converted blueprint.
+//
+// `mainBlueprintSlug` stamps `role: "main"` on the matching blueprint so
+// the viewer's `buildChapterTree` picks it as the main chapter — without
+// it `forest.main` is null, the contents tree only renders orphans, and
+// the focused chapter for trace replay isn't established. Our `convert`
+// CLI doesn't propagate `leapter.project.main` into the per-blueprint
+// JSONs, so we tag client-side. The blueprint being actively replayed is
+// the natural "main" for this view session.
+export async function loadProjectExport(
+  mainBlueprintSlug?: string,
+): Promise<ProjectExport> {
+  const project = await loadProject();
+  const models = Object.entries(project.models).map(([slug, model]) =>
+    slug === mainBlueprintSlug
+      ? ({ ...model, role: "main" } as Record<string, unknown>)
+      : (model as Record<string, unknown>),
+  );
+  return {
+    version: "2",
+    app: {
+      id: project.manifest.project.id,
+      label: project.manifest.project.label,
+    },
+    models,
+  };
+}
+
 function isLocal(ctx: RuntimeContext): boolean {
   return getProjectConfig(ctx.projectSlug).mode === "local";
 }
