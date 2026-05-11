@@ -1,7 +1,7 @@
 /**
  * Lazy loader for the <leapter-logic-viewer> web component bundle.
  *
- * The viewer is hosted on test.lab.leapter.com as an ESM bundle with a chunk file.
+ * The viewer is hosted on lab.leapter.com as an ESM bundle with a chunk file.
  * We inject a `<script type="module">` that imports the entry point, which
  * registers both `<leapter-logic-viewer>` and `<leapter-blueprint-viewer>`
  * as custom elements.
@@ -13,7 +13,7 @@
  * injected once.
  */
 
-const VIEWER_BASE_URL = "https://test.lab.leapter.com/viewer";
+const VIEWER_BASE_URL = "https://lab.leapter.com/viewer";
 const VIEWER_ENTRY = `${VIEWER_BASE_URL}/leapter-blueprint-viewer.esm.js`;
 
 let loaded = false;
