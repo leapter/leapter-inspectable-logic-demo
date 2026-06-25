@@ -17,7 +17,10 @@ Reference for all built-in operations available in Veritas blueprints.
 | `arr.reverse()`            | `reversed = items.slice().reverse()` | Reverse in-place                                                                                                                          |
 | `arr.join(separator)`      | `text = items.join(", ")`            | Join into string                                                                                                                          |
 | `arr.concat(other)`        | `combined = items.concat([10, 20])`  | Merge arrays                                                                                                                              |
-| `arr.sort()`               | `sorted = items.slice().sort()`      | **Lexicographic only** — sorts `[10, 2, 3]` as `[10, 2, 3]`, not `[2, 3, 10]`. No custom comparator. Use bubble sort for numeric sorting. |
+| `sort(list, order?)`       | `ranked = sort(scores, "descending")` | **Built-in.** Returns a NEW list in natural order — numbers numerically, strings lexicographically. `order` is `"ascending"` (default) or `"descending"`. Input list unchanged. |
+| `sum(list)`                | `total = sum(amounts)`               | **Built-in.** Total of a list of numbers, skipping absent (null) entries; `sum([])` is `0`. Do not hand-roll an accumulator loop. |
+| `max(list, fallback?)`     | `highest = max(scores, 0)`           | **Built-in.** Largest number in a list; absent (null) entries are skipped. Empty list returns `fallback`, or **errors** if none is given (never null). Do not hand-roll an `if (x > cur)` loop. (Scalar two-value max stays `Math.max(a, b)`.) |
+| `min(list, fallback?)`     | `lowest = min(scores, 0)`            | **Built-in.** Smallest number in a list; absent (null) entries are skipped. Empty list returns `fallback`, or **errors** if none is given (never null). Do not hand-roll an `if (x < cur)` loop. (Scalar two-value min stays `Math.min(a, b)`.) |
 
 ### Not Supported
 
@@ -30,39 +33,23 @@ Reference for all built-in operations available in Veritas blueprints.
 | `.find(fn)`        | `for` loop with `break`               |
 | `.includes(value)` | `.indexOf(value) >= 0`                |
 
-### Numeric Sort Pattern
+### Sorting
 
-Since `.sort()` is lexicographic, use bubble sort for numeric ordering:
+Use the **`sort`** built-in — never hand-roll a bubble sort. It returns a new list in natural order (numbers numerically, strings lexicographically) and leaves the input unchanged:
 
 ```veritas
-//* Declare sort indices
-var
-//* Outer index
-outerIndex: number = 0,
-//* Inner index
-innerIndex: number = 0,
-//* Swap temporary
-swapTemp: number = 0;
-
-//* Bubble sort ascending
-for (outerIndex = 0; outerIndex < values.length; outerIndex += 1) {
-    //* Compare adjacent pairs
-    for (innerIndex = 0; innerIndex < values.length - 1 - outerIndex; innerIndex += 1) {
-        //* Swap if out of order
-        choose {
-            //* Current greater than next
-            if (values[innerIndex] > values[innerIndex + 1]) {
-                //* Store current
-                swapTemp = values[innerIndex];
-                //* Move next to current position
-                values[innerIndex] = values[innerIndex + 1];
-                //* Place stored value in next position
-                values[innerIndex + 1] = swapTemp;
-            }
-        }
-    }
-}
+//* Order scores, highest first
+rankedScores = sort(scores, "descending");
 ```
+
+`order` is optional and defaults to `"ascending"`:
+
+```veritas
+//* Order scores, lowest first
+rankedScores = sort(scores);
+```
+
+The built-in transpiles to the correct idiom on every runtime (`sorted(...)` in Python, a numeric-comparator sort in JavaScript), so `[10, 2, 3]` orders as `[2, 3, 10]`, not lexicographically.
 
 ### Building Result Objects
 
@@ -198,7 +185,7 @@ for (var rule in rules) {
 
 | Function              | Description              | Example                 |
 | --------------------- | ------------------------ | ----------------------- |
-| `Math.round(n)`       | Round to nearest integer | `Math.round(3.7)` → `4` |
+| `round(n, decimals?)` | **Built-in.** Round half away from zero; `decimals` defaults to `0`. Prefer over `Math.round` (half-up, wrong for negatives). | `round(3.7)` → `4` |
 | `Math.floor(n)`       | Round down               | `Math.floor(3.7)` → `3` |
 | `Math.ceil(n)`        | Round up                 | `Math.ceil(3.2)` → `4`  |
 | `Math.abs(n)`         | Absolute value           | `Math.abs(-5)` → `5`    |
@@ -206,15 +193,6 @@ for (var rule in rules) {
 | `Math.max(a, b)`      | Larger of two            | `Math.max(3, 7)` → `7`  |
 | `Math.pow(base, exp)` | Exponentiation           | `Math.pow(2, 3)` → `8`  |
 | `Math.sqrt(n)`        | Square root              | `Math.sqrt(16)` → `4`   |
-
-> There is no bare `round()` function — always use `Math.round()`.
-
-### Rounding to Decimal Places
-
-```veritas
-//* Round to 2 decimal places
-roundedAmount = Math.round(amount * 100) / 100;
-```
 
 ## Number Formatting
 
@@ -226,23 +204,25 @@ roundedAmount = Math.round(amount * 100) / 100;
 
 ## Blueprint Calls
 
-A Leapter project is a set of blueprints that can call each other. This is the primary unit of reuse — decompose complex logic into a main blueprint plus helper blueprints and have main call the helpers via `__call_blueprint__`.
+A Leapter project is a set of blueprints that can call each other. This is the primary unit of reuse — decompose complex logic into a main blueprint plus helper blueprints and have main **call the helpers like ordinary functions**.
 
 ### Syntax
 
+A blueprint call is a normal function call with **named arguments**:
+
 ```
-__call_blueprint__ @ref(modelName, appName?) (inputs) -> resultVar;
+var resultVar: any single = callIdentifier(paramName: expression, ...);
 ```
+
+It composes inside expressions too: `total = base + calculateTax(amount: subtotal).tax;`.
 
 **Rules:**
 
-- `@ref` takes `(modelName)` or `(modelName, appName)`
-- **Same-file helpers** (multi-function in one file): use the function identifier name — `@ref("lookupRate")`
-- **Cross-file helpers** (same project, separate `.logic.vts` files — the standard project layout): use the helper blueprint's `//*` label — `@ref("Rate Lookup")`
-- **Cross-project calls:** use `@ref("ModelName", "AppName")`
-- `-> resultVar` receives the **full output object** of the called blueprint, not a single field. Access fields via `resultVar.fieldName`
-- The result variable should be typed as `any single`
-- For same-file helpers, the helper function declaration must appear **before** the main function in the file
+- **Named arguments only.** Each argument is `paramName: value`, where `paramName` is an input parameter of the called blueprint. (Positional arguments are only for built-ins like `Math.round(x)`.)
+- **The call name is the blueprint's `callIdentifier`, NOT its label.** A stored blueprint doesn't keep its function name, so the call name is the **label lowercased with every run of non-alphanumeric characters replaced by `_`**: `"Zone Rate Lookup"` → `zone_rate_lookup`, `"Calculate Tax"` → `calculate_tax`.
+  - In the **chat agent**, read it from `list_blueprints` — each blueprint's `callIdentifier` field is the exact string to use.
+  - When **authoring files directly**, derive it from the helper's `//*` label with the rule above.
+- The result receives the **full output object** of the called blueprint, not a single field. Access fields via `resultVar.fieldName`. Declare the result variable as `any single`.
 
 ### Worked example — cross-file helper in a project
 
@@ -310,11 +290,7 @@ function calculateShippingFee(
     //* Look up the zone's base rate via the helper blueprint
     var
     //* Zone lookup result
-    zoneResult: any single = null;
-    //* Call the helper
-    __call_blueprint__ @ref("Zone Rate Lookup") (
-        zone = zone
-    ) -> zoneResult;
+    zoneResult: any single = zone_rate_lookup(zone: zone);
 
     //* Compute base fee
     totalFee = zoneResult.ratePerKg * weightKg;
@@ -335,7 +311,7 @@ function calculateShippingFee(
 
 Key points:
 
-- `@ref("Zone Rate Lookup")` — matches the helper blueprint's label. The label comes from the `//*` comment on the function declaration (here `//* Zone Rate Lookup`). If the `//*` is ever missing, the converter falls back to a title-cased version of the function name (`lookupZoneRate` → `"Lookup Zone Rate"`); but every blueprint carries a `//*` label in practice (Critical Rule 1 in `SKILL.md`), so you always author and call by that text.
-- Declare the result variable as `any single` before the call, then invoke with `__call_blueprint__ ... -> zoneResult;`.
-- Access fields on the returned object: `zoneResult.ratePerKg`. The returned object shape matches the helper's output parameters.
+- `zone_rate_lookup(...)` — the call name is the helper's **`callIdentifier`**, derived from its `//* Zone Rate Lookup` label (lowercase, non-alphanumeric runs → `_`). It is **not** the helper's function-declaration name (`lookupZoneRate`). In the chat agent, take the exact string from `list_blueprints`; when authoring files, apply the rule to the label.
+- `zone: zone` — a **named argument**: the left side is the helper's input parameter `zone`, the right side is the caller's expression. Every argument must be named.
+- Declare the result variable as `any single`. It receives the helper's **full output object**; read fields off it: `zoneResult.ratePerKg`. The object's shape matches the helper's output parameters.
 - The helper is a complete, self-contained blueprint — it could be run standalone via `leapter runtime run --model lookup-zone-rate`, or called from any other blueprint in the project.

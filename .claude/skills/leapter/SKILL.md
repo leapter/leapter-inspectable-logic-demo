@@ -553,11 +553,11 @@ Common causes:
 - **Local `var` shadows an output parameter** — declaring `var rate: number = 0;` when `rate` is also an output param creates a separate local variable that interferes with the output binding. Assign directly to the output param instead.
 - **Blueprint content didn't upload** — check the SaaS UI to verify the blueprint has logic content
 
-### `__call_blueprint__` runtime error: "Cannot convert {Object} to number"
+### Blueprint-call result used as a scalar: "Cannot convert {Object} to number"
 
-The `-> varName` binding receives the **full output object** (e.g., `{ rate: 5.0 }`), not a single scalar. If you use the variable directly as a number, it fails. Access the field explicitly: `varName.rate` in subsequent code.
+A named blueprint call binds the **full output object** to its result variable, not a single scalar. `var r: any single = calculate_rate(amount: x);` gives `r = { rate: 5.0 }` — using `r` directly as a number fails. Access the field explicitly: `r.rate` in subsequent code. (The call name is the callee's `callIdentifier` — its label lowercased with non-alphanumeric runs replaced by `_`; see the `leapter-veritas` skill.)
 
 ## Tool Routing
 
-- **Business logic / Veritas code** → `leapter-veritas` skill (in `skill/veritas/`)
+- **Business logic / Veritas code** → `leapter-veritas` skill
 - **CLI operations / deployment / testing** → This skill
