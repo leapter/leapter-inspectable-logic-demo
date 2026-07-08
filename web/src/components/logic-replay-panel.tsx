@@ -51,11 +51,6 @@ export function LogicReplayPanel({
   const [fading, setFading] = useState(false);
   const loadedForModel = useRef<string | null>(null);
   const prevRunId = useRef<string | undefined>(undefined);
-  const firstRunId = useRef<string | undefined>(undefined);
-  if (runId && firstRunId.current === undefined) {
-    firstRunId.current = runId;
-  }
-  const isFirstRun = runId !== undefined && runId === firstRunId.current;
   const runtimeMode = useRuntimeStore(
     (s) => s.configs[projectSlug]?.mode ?? "local",
   );
@@ -229,7 +224,7 @@ export function LogicReplayPanel({
               initialBlueprint={projectJson ? blueprintSlug : undefined}
               traceJson={traceAttr ?? undefined}
               autoMaximize={projectJson ? true : undefined}
-              autoplay={isFirstRun}
+              autoplay={false}
             />
           </div>
         )}
