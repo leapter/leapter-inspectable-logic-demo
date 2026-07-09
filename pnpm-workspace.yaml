@@ -1,3 +1,14 @@
 packages:
   - "web"
   - "packages/*"
+
+# Pre-approve the native build scripts in our dependency tree. Without this,
+# pnpm 10+ blocks these builds ("Ignored build scripts") and pnpm 11 exits
+# non-zero on the pre-run dependency check, which blocks `pnpm dev`.
+#   sharp         – Next.js image optimization
+#   unrs-resolver – ESLint's native module resolver
+#   msw           – Mock Service Worker (writes its worker script)
+onlyBuiltDependencies:
+  - sharp
+  - unrs-resolver
+  - msw

@@ -59,8 +59,12 @@ Checks to run (silently):
 3. `.leapter-tools/cli/leapter help` — must print usage text
 4. Check if `web/.env.local` exists — if not, run `./init.sh` (macOS/Linux) or
    `init.cmd` (Windows) to create it
-5. Check if `web/node_modules/.package-lock.json` exists — if not, run
-   `cd web && pnpm install`
+5. Check if `node_modules/.pnpm` exists (in the **repo root**) — if not, run
+   `pnpm install` **from the repo root**. This is a pnpm workspace: a root
+   install covers `web`, `packages/*`, and the root's own dev tools (like
+   `concurrently`, which `pnpm dev` needs) in one go. Do **not** run
+   `pnpm install` from inside `web/` — that can leave the root uninstalled, so
+   `pnpm dev` then fails with `concurrently: command not found`.
 
 Show a simple status to the user:
 
