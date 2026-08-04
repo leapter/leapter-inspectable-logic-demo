@@ -166,11 +166,12 @@ leapter login <lab-url> --api-key <key>         # API key against specific insta
 leapter logout                                  # Sign out and clear stored credentials
 leapter push                                    # Push blueprints (auto-creates project on first push)
 leapter push <directory>                        # Push from specific directory
+leapter push --space <slug|id>                  # Push into a specific workspace (first push)
 leapter clone                                   # List remote projects available for cloning
 leapter clone <project-id>                      # Clone a remote project locally
 leapter clone <project-id> -o <dir>             # Clone to specific directory
 leapter list                                    # List blueprints in current project
-leapter projects list                           # List all your accessible projects
+leapter projects list                           # List all your accessible projects (with workspace)
 leapter projects create <name>                  # Create a new project on the server
 
 # Remote runtime (requires runtime API key)
@@ -403,7 +404,12 @@ Before running `leapter push`:
    host comes from the login session / `.leapter/.remote-config`.
 3. **Push itself does not need an API key** — it uses the OAuth session from
    `leapter login`.
-4. **Remote execution DOES need an API key.** If the user also wants to call
+4. **Workspace targeting.** Projects live in workspaces. With one workspace the
+   push lands there automatically; with several, pass `--space <slug|id>` (or
+   set `LEAPTER_SPACE`) — without it the push fails listing the available
+   workspaces (in a terminal it prompts instead). The chosen workspace is
+   recorded in `.leapter/.remote-config` and reused on later pushes.
+5. **Remote execution DOES need an API key.** If the user also wants to call
    the hosted runtime (from a website or `leapter runtime run remote`), create
    one with `leapter runtime api-key create` after the push succeeds.
 
@@ -538,7 +544,19 @@ Common causes:
 
 - **Duplicate node IDs** across `.vts` files in the project — IDs must be globally unique
 - **Node IDs conflict** with blueprints in other projects in the same appspace
+- **API key not workspace-scoped** — the key is bound to an account that is not
+  one of your workspaces (e.g. a legacy personal-account key). Create a new API
+  key in your workspace and log in with that.
 - Fix: regenerate the conflicting IDs with `uuidgen` and push again
+
+### Push asks for a workspace (409) or reports "No Workspace" (412)
+
+- **409 Workspace Selection Required** — you belong to several workspaces and
+  none was specified. Re-run with `--space <slug|id>` (or set `LEAPTER_SPACE`).
+  The error lists the available workspaces.
+- **412 No Workspace** — your user has no workspace yet. Sign in to the Leapter
+  web app once (it provisions your workspace), then retry. The CLI never
+  creates workspaces.
 
 ### Push says "unchanged" but content is stale
 
