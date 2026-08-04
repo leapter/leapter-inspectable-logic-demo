@@ -1,0 +1,30 @@
+{
+  "leapter-cli.cjs": {
+    "commit": "66e1a6f9f38d6bea32ee11cb7e5e13e50d7f42fb",
+    "commit_short": "66e1a6f",
+    "committed_at": "2026-08-04T07:07:27Z",
+    "built_at": "2026-08-04T07:13:31Z",
+    "run": "https://github.com/leapter/genielabs/actions/runs/30886561284"
+  },
+  "leapter-blueprint-viewer.vsix": {
+    "commit": "66e1a6f9f38d6bea32ee11cb7e5e13e50d7f42fb",
+    "commit_short": "66e1a6f",
+    "committed_at": "2026-08-04T07:07:27Z",
+    "built_at": "2026-08-04T07:13:31Z",
+    "run": "https://github.com/leapter/genielabs/actions/runs/30886561284"
+  },
+  "runtime-browser.mjs": {
+    "commit": "66e1a6f9f38d6bea32ee11cb7e5e13e50d7f42fb",
+    "commit_short": "66e1a6f",
+    "committed_at": "2026-08-04T07:07:27Z",
+    "built_at": "2026-08-04T07:13:31Z",
+    "run": "https://github.com/leapter/genielabs/actions/runs/30886561284"
+  },
+  "runtime-browser.d.ts": {
+    "commit": "66e1a6f9f38d6bea32ee11cb7e5e13e50d7f42fb",
+    "commit_short": "66e1a6f",
+    "committed_at": "2026-08-04T07:07:27Z",
+    "built_at": "2026-08-04T07:13:31Z",
+    "run": "https://github.com/leapter/genielabs/actions/runs/30886561284"
+  }
+}

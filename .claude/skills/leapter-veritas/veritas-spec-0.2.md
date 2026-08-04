@@ -2,7 +2,7 @@
 
 Veritas is a business logic DSL. Programs are called **blueprints**. Every statement requires a label. The runtime is ES5-based with specific divergences documented below.
 
-Projects declare shared domain types in a single `data/types.data.vts` file and reference them from `.logic.vts` blueprints — see **Structured Types** below.
+Projects declare shared domain types in a single types document and reference them from logic blueprints — see **Structured Types** below.
 
 ## Design Philosophy
 
@@ -24,8 +24,9 @@ Veritas blueprints are **living documentation** of business rules. They are mean
 - **Prefer `and`/`or`/`not`/`is` over symbolic operators.** Natural language operators make conditions readable by non-programmers.
 - **Use `for...in` when you don't need the index.** `for (var item in items)` is more readable than index-based loops.
 - **Validate early, fail fast — but let the type system do the type and shape checks.** Every input is validated against its DECLARED TYPE at the run boundary, before your logic runs — not just enums. A `constrained_to` value outside its allowed set is rejected; a Structure-typed input missing a required field or carrying a wrong-typed field is rejected; a `list of <type>` whose items don't match is rejected. So type your inputs — a `constrained_to` alias for "one of a known set," a Structure for a thing-with-fields — and don't hand-write the matching membership / field-presence / field-type guards; the runtime already does them. Reserve top-of-function `throw` validation for what types can't express — numeric ranges, cross-field consistency, and other business rules.
+- **Names are unique per function.** Inputs, outputs, and local declarations share one namespace; every name must be unique across all three. The studio blocks duplicate names, and a duplicate corrupts schema/execution keying.
 - **Assign outputs directly.** Never re-declare output parameters with `var` — assign to them directly.
-- **Initialize neutral OUTPUT state with a signature default, not a node.** When an output starts at a supported scalar default (`0`, `false`, `""`) or an empty list default (`[]`), declare it in the signature. For output lists of any element type, including user-defined structures, use `= []` in the signature; do not create a body node just to assign `someOutput = []`. Do not use `{}` as a default for user-defined structures. Keep a body assignment for computed, branch-specific, reset, unsupported, or domain-significant values such as `regime = "unknown"`.
+- **Initialize neutral OUTPUT state with a signature default, not a node.** When an output starts at a supported scalar default (`0`, `false`, `""`) or a structured default, declare it in the signature. For output lists of any element type, including user-defined structures, use `= []` (empty) or a populated literal like `= [{ "name": "alice" }]`; for a single (non-list) user-defined structure, use a populated object literal like `= { "name": "alice" }`. Do not create a body node just to assign `someOutput = []`. A `map of <Structure>` default is not supported in the signature — initialize it in the body. Keep a body assignment for computed, branch-specific, reset, unsupported, or domain-significant values such as `regime = "unknown"`.
 - **Name the current item in loops.** At the start of each loop iteration, assign a descriptive variable like `currentInvestorName = investors[index].name`. This makes execution traces self-documenting — a reader sees _who_ is being processed, not just "iteration 2."
 - **Never push large inline objects.** If an object has more than 2-3 fields, pre-compute each field into a labeled variable, then push. Inline `{ "a": x, "b": y, "c": z, ... }` renders as an unreadable wall of text in the blueprint viewer. Each field should be a separate labeled step so domain experts can trace the logic.
 - **Follow project layout.** Each blueprint lives in its own subdirectory: `logic/<slug>/<slug>.logic.vts`. This is required for `leapter runtime run --model <slug>` to resolve the file.
@@ -37,9 +38,9 @@ Expressions in Veritas follow **ES5 JavaScript** compliance — same operator pr
 | Category         | Supported                                                                            | Not Supported                                      |
 | ---------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------- | -------------------------------------- | --------------------------------------------- |
 | **Primitives**   | `_text`, `number`, `boolean`, `date`, `time`, `datetime`, `duration`, `range`        | Classes, generics                                  |
-| **User types**   | Structures + aliases via `define` in `data/types.data.vts`                           | Inline `define` inside `.logic.vts`                |
+| **User types**   | Structures + aliases via `define` in the types document                              | Inline `define` inside a logic blueprint           |
 | **Collections**  | `list of <type>`, `any single`, `any multiple`                                       | `list of any`, `map of any`                        |
-| **Control flow** | `choose`/`if`/`else`, `for` (index), `for...in` (each), `while`, `break`, `continue` | Standalone `if`, `else if`, `switch`, `do...while` |
+| **Control flow** | `choose`/`if`/`else`, `decide first`, `for` (index), `for...in` (each), `while`, `break`, `continue` | Standalone `if`, `else if`, `decide unique`, `switch`, `do...while` |
 | **Operators**    | `+` `-` `*` `/` `%` `&&` `                                                           |                                                    | ` `!` `and` `or` `not` `is` `==` `===` | `++` `--`, `? :` (avoid — use choose/if/else) |
 | **Null**         | `null`, `absent`                                                                     | —                                                  |
 | **Functions**    | `function`, named calls `f(p: v)` (incl. blueprint calls), `throw`, `return;`        | Arrow functions, closures, callbacks, `new`        |
@@ -61,12 +62,12 @@ function main(...) -> ... { ... }
 
 Every function has typed inputs, typed outputs (after `->`), and a body. Output parameters use bare `->` syntax. The function ends with `return;` (no expression).
 
-> Function inputs and outputs can be primitives (`_text`, `number`, ...), `list of <type>`, or user-defined structures and aliases declared in `data/types.data.vts`. See **Structured Types** below for authoring a shared domain model.
+> Function inputs and outputs can be primitives (`_text`, `number`, ...), `list of <type>`, or user-defined structures and aliases declared in the project's types document. See **Structured Types** below for authoring a shared domain model.
 
 ```veritas
 //* Tax Calculator
 """Adds VAT to a net price so checkout can show the gross amount the customer actually pays. The rate is supplied per call because it varies by product category and jurisdiction."""
-function calculateTotal(
+function tax_calculator(
     //* Base price
     price: number,
     //* Tax rate as decimal
@@ -86,7 +87,10 @@ function calculateTotal(
 
 **Rules:**
 
+- **Name the function with its label's snake_case slug** — the same string callers use (the `callIdentifier`): `//* Tax Calculator` → `function tax_calculator`. The call name is the label lowercased with every run of non-alphanumeric characters replaced by `_`; authoring the declaration with that slug keeps the declared name and the call name identical. Do **not** emit camelCase (`calculateTotal`) — a stored blueprint is still called by the slug, so the names would drift.
+  (`leapter format` rewrites the declaration to the slug anyway, rewriting same-file call sites in lockstep.)
 - **Every blueprint MUST carry a `"""description"""` on the line directly under its `//*` title.** This is the blueprint's description in the project — domain experts read it to understand what the blueprint is _for_. Write 1–3 sentences on the business problem it solves and why it exists (the WHY); do not restate its code, and never omit it. (`""""""` — an empty description — is only acceptable for a throwaway stub you will fill in immediately.)
+- Inputs, outputs, and local declarations share one namespace — every name must be unique across all three groups
 - Assign to output parameters directly — never re-declare them with `var` (this shadows the output and produces empty results)
 - Every `return;` path must have all outputs assigned
 - `return` takes no expression
@@ -96,7 +100,7 @@ function calculateTotal(
 Input and output parameters can carry a default value. The caller's value takes precedence; when absent, the runtime applies the default at function entry.
 
 ```veritas
-function calculateTotal(
+function tax_calculator(
     //* Base amount
     amount: number,
     //* Tax rate — defaults to 0.19 when the caller omits it
@@ -117,8 +121,9 @@ function calculateTotal(
 **Syntax:**
 
 - Use `type` before the type name to take the default-value form: `name: type <type> = <literal>`. Without `type` (`name: number`), defaults are not allowed.
-- Supported: primitives (`_text`, `number`, `boolean`, `date`, `time`, `datetime`, `duration`, `range`), `list of <primitive>` / `map of <primitive>`, and empty-list defaults (`= []`) for `list of <type>` including user-defined structures.
-- Not supported: non-list user-defined structures, `any single`, `any multiple`. Initialize those in the function body if needed.
+- Supported: primitives (`_text`, `number`, `boolean`, `date`, `time`, `datetime`, `duration`, `range`), `list of <primitive>` / `map of <primitive>`, `list of <Structure>` defaults — both empty (`= []`) and populated with object literals (`= [{ "age": 10, "name": "alice" }]`) — and single `<Structure>` defaults written as an object literal (`= { "age": 10, "name": "alice" }`). `map of <Structure>` defaults are not supported in the signature — initialize them in the body. Object keys may be quoted or bare identifiers; the canonical serializer emits quoted keys. Each object must match the structure's fields (required fields present, no unknown fields, primitive fields correctly typed) or validation fails.
+- **Value types (named aliases) take scalar defaults.** A parameter typed with a user-defined alias — e.g. `define DecisionStatus as _text constrained_to ["NO_PROMOTION", "APPLIED"]` — carries a scalar literal default directly: `status: type DecisionStatus = "NO_PROMOTION"`, and in list form `statuses: type list of DecisionStatus = ["NO_PROMOTION"]`. The literal must match the alias's base primitive, and for a `constrained_to` alias it must be one of the allowed values — validation rejects out-of-set or wrong-kind defaults. **Never rewrite a value-typed parameter to `_text` just to give it a default** — that destroys the enum typing and its run-boundary validation; keep the named type and attach the scalar default to it.
+- Not supported: `map of <Structure>` defaults, `any single`, `any multiple`, and computed (non-literal) defaults. Initialize those in the function body if needed.
 
 ## Types
 
@@ -148,22 +153,42 @@ The canonical spelling in v0.2 is `_text` for strings. The legacy `string` keywo
 | `any multiple`   | Opaque array of objects        | `[{"id": 1}, {"id": 2}]` | yes              |
 | `any`            | Unknown/flexible               | —                        | no               |
 
-**Invalid:** `list of any`, `map of any`. Prefer a named structure over `any single` / `any multiple` whenever the shape is known — structures give the reader a name, and the CLI validates cross-references against the types document.
+**Invalid:** `list of any`, `map of any`. Prefer a named structure over `any single` / `any multiple` whenever the shape is known — structures give the reader a name, and validation checks cross-references against the types document.
 
 **Maps:** `map of <type>` parses but the runtime does not support dynamic property assignment on `{}` objects. Model the shape as a structure when the keys are fixed.
 
+### Standard library types
+
+One formatted alias is built in — reference it directly, no `define` needed:
+
+| Type      | Base     | Stored value (canonical) | Displayed as    |
+| --------- | -------- | ------------------------ | --------------- |
+| `percent` | `number` | a fraction (`0.5`)       | localized `50%` |
+
+Use it for any value read with a `%` sign (`rate: percent`). A `percent` is **stored as a fraction** — write `0.2` for 20% and compute it as `part / whole`, never `× 100` (storing `20` renders as `2000%`).
+
+For other formatted values, put a `@format` annotation on your own alias — the stored value stays raw, only display and validation localize. Currency lives in a project alias because the code is app-specific:
+
+```veritas
+@format: "currency" @currency: "EUR" @fractionDigits: 2
+define EuroAmount "A monetary amount in euros" as number
+```
+
 ## Structured Types
 
-In v0.2 a project may declare shared domain types in a **single types document** at `data/types.data.vts`. One document per project. Logic files reference the declared names directly in parameter, output, and variable positions.
+A project **may** declare shared domain types in a **single types document**. One document per project. Logic blueprints reference the declared names directly in parameter, output, and variable positions.
+In a project directory the types document lives at `data/types.data.vts`.
 
-> **Iteration-1 constraint:** only one `.data.vts` file per project. Multi-file type models are a follow-up.
+> **A type model is optional — prefer flat primitives.** For simple inputs/outputs, declare primitives (`_text`, `number`, `list of _text`, …) right in the signature and skip the types document entirely; you SHOULD do this for plain, shallow data. Reach for a Structure only when it pays off: rich object models and deeply nested graphs where a named type makes the shape easier to understand.
 
-### `data/types.data.vts`
+> **Iteration-1 constraint:** only one types document per project. Multi-file type models are a follow-up.
+
+### The types document
 
 Two forms of `define` are supported: structures (fields with types) and aliases (a new name for an existing type, optionally constrained to a value set).
 
 ```veritas
-// data/types.data.vts
+// The project's types document
 
 define Employee "Someone on the payroll" {
   name: _text "Legal name"
@@ -197,7 +222,7 @@ define Tier "Customer loyalty band" as _text constrained_to ["bronze", "silver",
 **Defining the alias is only half the job — TYPE THE INPUT WITH IT.** The whole point is that the input parameter carries the constrained type: write `systemType: SystemType`, NOT `systemType: _text`. Defining `SystemType` but then declaring the input as bare `_text` and re-checking it by hand is the anti-pattern, not the fix — the alias sits unused while the manual guard does the work the type should. And if the requirements brief carries an _"Error case"_ saying an input must be one of a set (e.g. _"if systemType is not one of …, report …"_), that is ALREADY satisfied by typing the input with the constrained alias — do NOT translate it into a `throw`.
 
 ```veritas
-// data/types.data.vts
+// The project's types document
 define SystemType "A building-system category" as _text constrained_to ["hvac", "lighting", "plumbing"]
 ```
 
@@ -205,7 +230,7 @@ define SystemType "A building-system category" as _text constrained_to ["hvac", 
 // ✅ Typed input — the runtime rejects an out-of-set systemType for you.
 //* Audit System
 """Scores a single building system. systemType is constrained, so an unknown value is rejected at the run boundary before this logic runs."""
-function auditSystem(
+function audit_system(
     //* System under audit
     systemType: SystemType
 ) ->
@@ -215,7 +240,7 @@ function auditSystem(
 
 // ❌ Anti-pattern — even with SystemType defined, the input is left bare _text
 // and re-checked by hand. The alias is unused; the manual guard is the bug.
-function auditSystem(
+function audit_system(
     systemType: _text
 ) ->
     score: number
@@ -236,14 +261,14 @@ function auditSystem(
 - `camelCase` for field names (`orderId`, `totalAmount`).
 - Match the convention LLMs default to so generated code stays idiomatic.
 
-### Using structures from `.logic.vts`
+### Using structures from logic
 
 Reference declared names directly:
 
 ```veritas
 //* Calculate Bonuses
 """Distributes a bonus pool proportionally to employee performance."""
-function calculateBonuses(
+function calculate_bonuses(
     //* Employees to pay
     employees: list of Employee,
     //* Company-wide bonus pool
@@ -279,9 +304,11 @@ function calculateBonuses(
 
 - Field access uses dot notation: `currentEmployee.name`, `order.tier`. Nested access works: `order.customer.email`.
 - Bracket notation is required for reserved-word field names: `item["type"]`.
-- A logic file that references an undefined type produces a `Cannot find type '<Name>'` error during `leapter validate`. Fix the types file first, then re-validate the logic.
+- A blueprint that references an undefined type produces a `Cannot find type '<Name>'` error during validation. Fix the types document first, then re-validate the logic.
 
 ### Validation loop
+
+Validate the types document first, then the logic; if the logic reports `Cannot find type '...'`, go back to the types document. Validating the types document in isolation (before the logic) keeps the error loop targeted.
 
 ```
 1. Edit data/types.data.vts → leapter validate
@@ -289,7 +316,7 @@ function calculateBonuses(
 3. If logic reports `Cannot find type '...'`, return to step 1
 ```
 
-Validating the types document in isolation (before the logic) keeps the error loop targeted. The CLI runs both passes automatically during a project-level `leapter validate`.
+The CLI runs both passes automatically during a project-level `leapter validate`.
 
 ## Variables
 
@@ -424,6 +451,56 @@ choose {
 > Input `{"age": 16, "hasId": true}` → `{"eligible": false, "reason": "Must be 18 or older"}`
 > Input `{"age": 25, "hasId": false}` → `{"eligible": false, "reason": "Valid ID required"}`
 
+### decide (decision tables)
+
+Use `decide first` for rule grids: the first matching row wins and all later rows are skipped. The table is GitHub-Flavored Markdown: a header row with input expressions, `->` before the output target columns, a `| --- |` delimiter row, then data rows; input cells are literal values or the `any` wildcard.
+
+```veritas
+//* Offer stackability verdict
+"""BR-017 — whether two offers may stack. Precedence is the explicit
+top-to-bottom order of the rows here (first match wins), not the invisible
+order of `if` branches it used to be."""
+decide first
+| offerA.stackable | offerB.stackable | -> canStack |
+| ---              | ---              | ---         |
+| true             | true             | true        |
+| true             | false            | false       |
+| false            | any              | false       |
+| any              | any              | false       |
+```
+
+> Input `{"offerA": {"stackable": true}, "offerB": {"stackable": true}}` → `{"canStack": true}`
+> Input `{"offerA": {"stackable": true}, "offerB": {"stackable": false}}` → `{"canStack": false}`
+> Input `{"offerA": {"stackable": false}, "offerB": {"stackable": true}}` → `{"canStack": false}`
+
+#### When to use a decision table
+
+- **Prefer a decision table when** the logic is a rules grid — several inputs combine to select an output, the cases are enumerable rows, precedence is "first match wins" (making precedence the explicit top-to-bottom order of the rows instead of the invisible order of `if` branches), and a domain expert would naturally read it as a table (e.g., rate cards, eligibility matrices, stackability/compatibility rules, or status transitions keyed on a few flags).
+- **Prefer `choose { if/else }` when** branches are few, conditions are rich boolean/relational expressions (ranges, comparisons, computed predicates) rather than literal-value matches, or each branch does meaningful work beyond assigning outputs.
+
+**This is a mandate, not a preference, for literal mappings.** If a `choose` block consists entirely of exact-match equality checks (`is` / `==`) against the same variable(s) to assign an output, it MUST be a `decide first` table — never a `choose` block for a 1:1 state translation or a rule grid. Use `choose` ONLY for inequalities and mixed conditions: ranges (`> 30`, `< 5`) or mixed logic require `choose`. As soon as the logic becomes a pure categorization grid (matching strings, booleans, or exact numbers), switch to `decide first`. Do not force a grid into a `choose` block just because a previous section used `choose`.
+
+**BAD** — obscures a simple grid behind branch logic:
+
+```veritas
+//* Tier rate
+choose {
+    if (tier is "A") { rate = 4.5; }
+    if (tier is "B") { rate = 6.0; }
+}
+```
+
+**GOOD** — a domain expert can read this instantly:
+
+```veritas
+//* Tier rate
+decide first
+| tier | -> rate |
+| ---  | ---     |
+| "A"  | 4.5     |
+| "B"  | 6.0     |
+```
+
 ### for (index-based)
 
 Loop variables **cannot** be declared in the header (`for (var i = 0; ...)` does not parse). Pre-declare, then use bare assignment:
@@ -455,7 +532,7 @@ for (var item in values) {
 }
 ```
 
-Works with `list of <primitive>` and `any multiple`. Simpler than index-based when you don't need the index.
+Works with `list of <primitive>`, `list of <NamedType>` (item fields are read directly, e.g. `item.price`), and `any multiple`. Simpler than index-based when you don't need the index.
 
 ### while
 
@@ -486,26 +563,19 @@ section "Apply Discount" {
     """Starts the discount at 0, then matches the discount code: SAVE10 subtracts 10% of the subtotal, SAVE20 subtracts 20%. Any other (or missing) code leaves the discount at 0. Codes are exclusive — only the first match applies."""
     //* Init discount
     discount = 0;
-    //* Check code
-    choose {
-        //* 10% discount
-        if (discountCode is "SAVE10") {
-            //* Apply 10%
-            discount = subtotal * 0.10;
-        }
-        //* 20% discount
-        if (discountCode is "SAVE20") {
-            //* Apply 20%
-            discount = subtotal * 0.20;
-        }
-    }
+    //* Discount by code
+    decide first
+    | discountCode | -> discount     |
+    | ---          | ---             |
+    | "SAVE10"     | subtotal * 0.10 |
+    | "SAVE20"     | subtotal * 0.20 |
 }
 ```
 
 **Rules:**
 
 - `"""description"""` inside braces is mandatory (use `""""""` for empty)
-- **Describe exactly what the section's logic does, completely — 2–3 full sentences, not a single clause.** Walk the actual steps in order: every operation, every branch and the value it produces, and the concrete numbers (thresholds, rates, formulas, codes). Then add the business reason where it gives insight. The reader should be able to predict the section's output without reading the statements (see _What Makes a Good Section Description_ below).
+- **Describe exactly what the section's logic does, completely — 2–3 full sentences, not a single clause.** Walk the actual steps in order: every operation, every branch or decision-table row and the value it produces, and the concrete numbers (thresholds, rates, formulas, codes). Then add the business reason where it gives insight. The reader should be able to predict the section's output without reading the statements (see _What Makes a Good Section Description_ below).
 - Sections do NOT take `//*` labels — the title serves as the label
 - Sections can nest as subsections
 - Keep sections to ~15-20 statements max
@@ -550,7 +620,7 @@ The description must let a reader predict the section's behaviour without readin
 | Aspect        | Bad                                          | Good                                                                                                          |
 | ------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | **Faithful**  | Vague gloss — "Calculates the tax"           | States what the logic actually does — "Multiplies engine size by the 9.50 EUR/100ccm Diesel rate"            |
-| **Complete**  | Omits a step or a branch                     | Walks every step and branch in order, with the value each one produces                                       |
+| **Complete**  | Omits a step, branch, or table row           | Walks every step, branch, and decision-table row in order, with the value each one produces                  |
 | **Specific**  | Generic — "applies a discount"               | Names the concrete numbers — "subtracts 10% of the subtotal for SAVE10, 20% for SAVE20"                       |
 | **Why**       | (none)                                       | Adds the business reason where it gives insight — the regulation, policy, or design choice                    |
 | **Scope**     | Covers the entire function                   | Covers exactly the logic within this section                                                                  |
@@ -596,14 +666,14 @@ Labels are the scannable outline a domain expert reads to verify the logic. The 
 | `if (driverAge < 25)`                           | `//* Young driver (under 25)`       | `//* Condition`                                                |
 | `throw "Amount must be positive"`               | `//* Reject non-positive amount`    | `//* Throw`                                                    |
 
-**Node IDs** are auto-generated by post-processing. Do not generate them in new code. When editing existing code, preserve them:
+**Node IDs** are auto-generated by post-processing. Do not generate them for new nodes. When editing — or fully rewriting — existing code, preserve the existing markers on every node you keep: a relabeled or changed node is still the same node and keeps its id — never invent a marker yourself. Dropping the markers severs node identity (comments, mentions, and diffs then treat the node as removed + re-added). The marker formats:
 
 | Format        | Used for              | Example              |
 | ------------- | --------------------- | -------------------- |
 | `//#id UUID`  | Function declarations | `//#id a0000001-...` |
 | `@T-aabbccdd` | All other nodes       | `@S-b0000001`        |
 
-Type prefixes: `S`=Section, `T`=Step, `D`=Decision, `C`=Condition, `E`=Else, `L`=Loop, `V`=Variable, `R`=Return, `X`=Error.
+Type prefixes: `S`=Section, `T`=Step, `D`=Decision, `G`=DecisionTable, `C`=Condition, `E`=Else, `L`=Loop, `V`=Variable, `R`=Return, `X`=Error.
 
 ## Return and Throw
 
@@ -642,7 +712,7 @@ var lookupTable: any single = {};
 lookupTable["key"] = "value";   // fails at runtime
 ```
 
-**Fix:** If the keys are known in advance, define a structure in `data/types.data.vts` and construct an instance up front rather than assigning keys at runtime. Reading properties on input objects works fine.
+**Fix:** If the keys are known in advance, define a structure in the types document and construct an instance up front rather than assigning keys at runtime. Reading properties on input objects works fine.
 
 ### String concatenation with inline arithmetic
 
