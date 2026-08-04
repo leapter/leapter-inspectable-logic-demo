@@ -6,13 +6,21 @@ scripts (`leapter` for Unix, `leapter.cmd` for Windows) prefer the local
 
 ## Update
 
-Maintainer-only: download the latest bundle from the release:
+Maintainer-only. All project-local Leapter tooling (the CLI, the VS Code
+extension, and the browser runtime bundle) is vendored inside this repository.
+
+To refresh every vendored tool from the rolling release
+(`leapter-tools-latest`), run this at the repository root:
 
 ```bash
-gh release download cli-latest --repo leapter/genielabs --pattern "leapter-cli.cjs" --dir .leapter-tools/cli --clobber
+pnpm update-tools
 ```
 
-Release page: https://github.com/leapter/genielabs/releases/tag/cli-latest
+The command is idempotent: it downloads all assets, verifies their SHA256
+checksums, vendors them into place, reinstalls the CLI dependencies, and
+re-converts the project blueprints with the updated CLI.
+
+Release page: https://github.com/leapter/genielabs/releases/tag/leapter-tools-latest
 
 Starter users do not need this update step for the included local demo.
 

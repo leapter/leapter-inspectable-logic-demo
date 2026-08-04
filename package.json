@@ -3,6 +3,7 @@
   "private": true,
   "license": "SEE LICENSE IN ./LICENSE",
   "scripts": {
+    "update-tools": "node scripts/update-tools.mjs",
     "vscode": "code --install-extension .leapter-tools/leapter-blueprint-viewer.vsix --install-extension anthropic.claude-code && code ./leapter ./leapter/leapter.project",
     "postinstall": "npm ci --prefix .leapter-tools/cli --silent --no-audit --no-fund",
     "convert:blueprints": ".leapter-tools/cli/leapter convert --project ./leapter --out web/public/blueprints",
