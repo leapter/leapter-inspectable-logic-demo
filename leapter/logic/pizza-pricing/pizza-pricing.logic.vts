@@ -9,16 +9,16 @@ All amounts are in USD.
 """
 function calculatePizzaPrice(
   //* Size of the pizza
-  pizzaSize: type string constrained_to ["small", "medium", "large"];,
+  pizzaSize: type _text choice ["small", "medium", "large"],
 
   //* Selected topping IDs
   toppings: list of text,
 
   //* Type of crust
-  crustType: type string constrained_to ["thin", "regular", "stuffed"];,
+  crustType: type _text choice ["thin", "regular", "stuffed"],
 
   //* Day the pizza is being ordered
-  dayOfWeek: type string constrained_to ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];) -> 
+  dayOfWeek: type _text choice ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]) ->
   //* Final price for the chosen day, in USD
   totalPrice: number,
 
