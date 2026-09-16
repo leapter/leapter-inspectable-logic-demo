@@ -64,6 +64,81 @@ function copyFileWithDir(src, dest) {
   fs.copyFileSync(src, dest);
 }
 
+// Lists every file below `dir` as a path relative to `dir` (sorted, [] if missing).
+function listFilesRecursive(dir, base = dir) {
+  if (!fs.existsSync(dir)) return [];
+  const files = [];
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...listFilesRecursive(fullPath, base));
+    } else if (entry.isFile()) {
+      files.push(path.relative(base, fullPath));
+    }
+  }
+  return files.sort();
+}
+
+// Maps each file below `dir` (relative path) to its SHA-256.
+function hashFilesRecursive(dir) {
+  const hashes = {};
+  for (const relPath of listFilesRecursive(dir)) {
+    hashes[relPath] = getSHA256(path.join(dir, relPath));
+  }
+  return hashes;
+}
+
+// Counts files that are new, changed or removed between two hash maps.
+function countChangedFiles(before, after) {
+  const names = new Set([...Object.keys(before), ...Object.keys(after)]);
+  let changed = 0;
+  for (const name of names) {
+    if (before[name] !== after[name]) changed++;
+  }
+  return changed;
+}
+
+// Copies the generated Claude scaffold (skills + commands) into the repository
+// `.claude/` directory. Only skill directories and command files that the CLI
+// generated are touched; everything else under `.claude/` is left alone.
+// Returns the number of skill/command files that are new, changed or removed.
+function syncClaudeScaffold(scaffoldClaudeDir, repoClaudeDir) {
+  let changed = 0;
+
+  // Skills: replace each generated skill directory as a whole.
+  const scaffoldSkillsDir = path.join(scaffoldClaudeDir, 'skills');
+  const skillNames = fs.existsSync(scaffoldSkillsDir)
+    ? fs.readdirSync(scaffoldSkillsDir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name)
+    : [];
+  for (const skillName of skillNames) {
+    const srcDir = path.join(scaffoldSkillsDir, skillName);
+    const destDir = path.join(repoClaudeDir, 'skills', skillName);
+    const before = hashFilesRecursive(destDir);
+    fs.rmSync(destDir, { recursive: true, force: true });
+    for (const relPath of listFilesRecursive(srcDir)) {
+      copyFileWithDir(path.join(srcDir, relPath), path.join(destDir, relPath));
+    }
+    changed += countChangedFiles(before, hashFilesRecursive(destDir));
+    console.log(`  ✓ Skill refreshed: ${skillName}`);
+  }
+
+  // Commands: overwrite each generated command file.
+  const scaffoldCommandsDir = path.join(scaffoldClaudeDir, 'commands');
+  const commandNames = fs.existsSync(scaffoldCommandsDir)
+    ? fs.readdirSync(scaffoldCommandsDir, { withFileTypes: true }).filter((e) => e.isFile()).map((e) => e.name)
+    : [];
+  for (const commandName of commandNames) {
+    const srcFile = path.join(scaffoldCommandsDir, commandName);
+    const destFile = path.join(repoClaudeDir, 'commands', commandName);
+    const before = fs.existsSync(destFile) ? getSHA256(destFile) : null;
+    copyFileWithDir(srcFile, destFile);
+    if (before !== getSHA256(destFile)) changed++;
+    console.log(`  ✓ Command refreshed: ${commandName}`);
+  }
+
+  return changed;
+}
+
 function main() {
   console.log('=== Leapter Tools Update Script ===');
 
@@ -190,7 +265,19 @@ function main() {
     console.log('\nInstalling/restoring Leapter CLI dependencies...');
     execSync('npm install --prefix .leapter-tools/cli', { stdio: 'inherit', cwd: process.cwd() });
 
-    // 11. Post-update conversion
+    // 11. Refresh the generated Claude scaffold (skills + commands) from the vendored CLI
+    console.log('\nRefreshing .claude skills and commands from the vendored CLI...');
+    const scaffoldDir = path.join(tempDir, 'claude-scaffold');
+    execSync(`.leapter-tools/cli/leapter init claude --dir "${scaffoldDir}"`, { stdio: 'inherit', cwd: process.cwd() });
+    const changedScaffoldFiles = syncClaudeScaffold(
+      path.join(scaffoldDir, '.claude'),
+      path.resolve(process.cwd(), '.claude')
+    );
+    console.log('\n=== Claude Scaffold Report ===');
+    console.log(`Skill/command files changed (new, changed or removed): ${changedScaffoldFiles}`);
+    console.log('✓ .claude skills and commands match the vendored CLI.');
+
+    // 12. Post-update conversion
     console.log('\nRunning pnpm convert:blueprints to refresh converted JSON blueprints...');
     execSync('pnpm run convert:blueprints', { stdio: 'inherit', cwd: process.cwd() });
     console.log('✓ Blueprints successfully refreshed with updated CLI.');
