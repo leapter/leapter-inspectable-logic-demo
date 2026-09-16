@@ -21,8 +21,19 @@ export interface RuntimeResponse {
   runId: string;
   outputData: Record<string, unknown>;
   traceData: { trace: unknown[]; totalDuration: number };
-  errorOutput: Array<{ title: string; detail: string }>;
-  runtimeErrors: Array<{ title: string; detail: string }>;
+  errorOutput: RunOutputError[];
+  runtimeErrors: RunOutputError[];
+}
+
+/**
+ * A message a blueprint produced. The type and fields describe a typed throw
+ * (ENG-2693) and are absent on a runtime fault.
+ */
+export interface RunOutputError {
+  title: string;
+  detail: string;
+  type?: string;
+  fields?: Record<string, unknown>;
 }
 
 export interface Manifest {
@@ -34,12 +45,29 @@ export interface Manifest {
     jsonPath?: string;
     helpers?: Array<{ modelId: string; label: string; jsonPath: string }>;
   }>;
+  /** Project type model, when the project declares types. */
+  types?: { modelId: string; label: string; jsonPath: string };
+}
+
+export interface TypeModel {
+  id: string;
+  label: string;
+  description?: string;
+  modelType?: string;
+  types: unknown[];
+  [k: string]: unknown;
 }
 
 export interface Project {
   manifest: Manifest;
   models: Record<string, LogicFlowModel>;
   helpers?: LogicFlowModel[];
+  /**
+   * Parsed `types.json` (the file `manifest.types.jsonPath` points at).
+   * With it, `date` outputs declared through a named alias or nested in a
+   * structure come back as `YYYY-MM-DD`.
+   */
+  typeModel?: TypeModel | null;
 }
 
 export interface RunBlueprintOptions {

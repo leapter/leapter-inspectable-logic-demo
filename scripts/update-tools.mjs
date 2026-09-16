@@ -17,7 +17,8 @@ const vendorMapping = {
     '.leapter-tools/cli/leapter-cli.cjs'
   ],
   'leapter-blueprint-viewer.vsix': [
-    '.leapter-tools/leapter-blueprint-viewer.vsix'
+    '.leapter-tools/leapter-blueprint-viewer.vsix',
+    '.leapter-tools/cli/leapter-blueprint-viewer.vsix'
   ],
   'runtime-browser.mjs': [
     'packages/runtime-browser/runtime-browser.mjs'
@@ -26,6 +27,7 @@ const vendorMapping = {
     'packages/runtime-browser/runtime-browser.d.ts'
   ],
   'build-info.json': [
+    '.leapter-tools/cli/build-info.json',
     '.leapter-tools/build-info.json'
   ]
 };
