@@ -20,6 +20,10 @@ The command is idempotent: it downloads all assets, verifies their SHA256
 checksums, vendors them into place, reinstalls the CLI dependencies, and
 re-converts the project blueprints with the updated CLI.
 
+It also refreshes the generated Claude Code skills and commands under
+`.claude/` (`leapter init claude`) so they match the vendored CLI. Skills the
+CLI does not generate are left untouched.
+
 Release page: https://github.com/leapter/genielabs/releases/tag/leapter-tools-latest
 
 Starter users do not need this update step for the included local demo.
