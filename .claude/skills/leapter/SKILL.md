@@ -11,6 +11,7 @@ triggers:
   - leapter validate
   - leapter login
   - leapter clone
+  - leapter pull
   - leapter runtime
   - push blueprint
   - deploy blueprint
@@ -80,7 +81,6 @@ my-project/
     "label": "Project Name",
     "description": "Project description"
   },
-  "main": "<slug>",
   "version": "1.0.0"
 }
 ```
@@ -88,25 +88,27 @@ my-project/
 - `leapFormat` must be `1`
 - `app.id` is the **canonical project ID** — used locally and on the server. `leapter init project` generates it; `leapter push` creates the remote project with this same ID
 - When creating a new project from scratch (not cloned), `leapter init project` generates the UUID automatically
-- **`main`** — the slug of the project's entry-point blueprint (required). This is the
-  blueprint that the runtime API exposes as the primary endpoint. It must match one of
-  the directory names under `logic/`. Example: if the main blueprint is at
-  `logic/calculate-pricing/calculate-pricing.logic.vts`, set `"main": "calculate-pricing"`.
+- The manifest carries no visibility — which blueprints are public is declared in the
+  `.logic.vts` files (see below). Legacy: `public: string[]` and `main` are still read
+  when no file declares `public`. They are never written.
 
-### Main Blueprint
+### Public and Private Blueprints
 
-Every project must designate one blueprint as the **main** entry point. This is the
-blueprint that:
+`public` directly before `function` makes a blueprint callable through the API. Without
+it a blueprint is private: runnable in the app, callable by other blueprints, not an
+endpoint. A project needs at least one public blueprint; several are allowed. A public
+blueprint also appears as a public chapter in the SaaS UI.
 
-- Is exposed as the primary runtime API endpoint
-- Appears as the project's main blueprint in the SaaS UI
-- Can call other blueprints in the project as helpers
+`public` is valid only directly before `function` on a top-level declaration; anywhere
+else it is a parse error. `leapter validate` fails with `NO_PUBLIC_BLUEPRINT` when no
+blueprint declares it.
 
 When creating a new project:
 
-1. Decide which blueprint is the entry point (the one the frontend will call)
-2. Set its slug as the `"main"` field in `leapter.project`
-3. Other blueprints are helpers — they can be called from the main blueprint
+1. Decide which blueprints the caller invokes directly (the ones the frontend will call)
+2. Declare each of them `public function` in its `logic/<slug>/<slug>.logic.vts` file
+3. Every other blueprint is private — it can be called from a public blueprint or
+   from another private one
 
 ### Blueprint-to-Manifest ID Matching
 
@@ -117,6 +119,17 @@ On `leapter push`, blueprints are matched to remote models by this ID:
 - No match → **created** as new
 - Remote-only → **unchanged** (not deleted)
 
+**Run `leapter format` before relying on that ID.** A freshly authored `.logic.vts` carries no
+`//#id`; `format` assigns it (and the `@T-` node ids) in place. Until then every `leapter
+convert` mints a **new** model id for the same blueprint, so anything that records ids —
+an extraction map, a generated report — is pinned to ids that the next convert invalidates.
+(`leapter push` runs `format` in place automatically before uploading, so a pushed project
+always carries persisted ids.)
+
+`format` treats `data/*.data.vts` the same way: it writes the `@Y-` type ids and the `@F-`
+field ids in place. Keep those markers when you rename a type. The push then updates the
+type instead of deleting it and adding a new one.
+
 ## Quick Reference
 
 ```bash
@@ -124,6 +137,7 @@ On `leapter push`, blueprints are matched to remote models by this ID:
 leapter validate                                # Validate all .vts files in project
 leapter validate <file.vts>                     # Validate a single file
 leapter validate <dir>                          # Validate all .vts files in directory
+leapter format                                  # Format .vts files AND assign the stable node/blueprint ids
 leapter convert                                 # Convert blueprints to LogicFlowModel JSON for in-browser execution
 leapter convert --watch                         # Reconvert on every .vts change (pair with `next dev`)
 leapter convert --project ./leapter --out web/public/blueprints  # Starter output dir
@@ -158,7 +172,7 @@ leapter test run <slug>                         # Run all suites for one bluepri
 leapter test run <slug> --suite <name>          # Run a single suite
 leapter test run <slug> --suite <name> --case <id> --format json
 
-# Push to SaaS (requires auth)
+# Deploy to SaaS (requires auth) — push AND release, both steps
 leapter login                                   # Authenticate via browser OAuth
 leapter login <lab-url>                         # Login to specific instance
 leapter login --api-key <key>                   # Authenticate with API key (local dev / CI)
@@ -170,17 +184,38 @@ leapter push --space <slug|id>                  # Push into a specific workspace
 leapter clone                                   # List remote projects available for cloning
 leapter clone <project-id>                      # Clone a remote project locally
 leapter clone <project-id> -o <dir>             # Clone to specific directory
+leapter pull                                    # Bring the Lab state into the linked working copy
+leapter pull <directory>                        # Pull into a specific directory
+leapter pull --force                            # Overwrite local changes that Lab does not have
 leapter list                                    # List blueprints in current project
 leapter projects list                           # List all your accessible projects (with workspace)
 leapter projects create <name>                  # Create a new project on the server
+leapter release --name 1.0.0                    # Publish the pushed draft — REQUIRED before the runtime can run it
+leapter release --name 1.0.0 --description "..." --json   # With notes, machine-readable result
 
 # Remote runtime (requires runtime API key)
 leapter runtime api-key create                  # Create a new read+execute key for this project
+leapter runtime api-key create --read-only      # Create a read-only key (printed once, not stored)
 leapter runtime api-key set <key>               # Manually store an existing key
 leapter runtime api-key show                    # Show current runtime API key (masked)
 leapter runtime api-key remove                  # Remove stored runtime API key
 leapter runtime describe --model <id> --remote   # Show blueprint schema (remote)
 leapter runtime run remote --model <id> --input '{}'  # Execute on hosted runtime
+leapter runtime endpoint                        # Print the hosted runtime URL + curl for each blueprint
+leapter runtime endpoint --model <slug> --format json
+
+# Build identity (put this in any bug report)
+leapter version                                 # Version, commit, commit date, Node, platform
+leapter version --json
+
+# Keep the bundled guidance in step with the CLI
+leapter init claude --check                     # Does this project's skill copy match the CLI? (exit 1 if not)
+leapter init claude                             # Refresh it
+
+# Is the CLI itself current?
+leapter update                                  # Compare against the published build, print the install command
+leapter update --check                          # Exit 1 if a newer build is published
+leapter update --json
 
 # Debugging
 leapter push --verbose                              # Verbose output (URLs, auth, response details)
@@ -192,6 +227,26 @@ LEAPTER_DEBUG=1 leapter push                        # Same via env var
 The CLI is designed for **offline-first development**. You can author, validate,
 and execute blueprints entirely locally — no SaaS connection needed until you're
 ready to deploy.
+
+**These skill files are a snapshot, not a live feed.** `leapter init claude`
+copies them into the project, and they stay at that version until it is run
+again — while `veritas-spec-0.2.md` keeps being revised under the same
+filename. `leapter validate` prints a note when the project's copy differs
+from the CLI's; `leapter init claude` refreshes it. If guidance here conflicts
+with what `leapter validate` accepts, the validator is right and this copy is
+stale.
+
+**Deploying is two commands, not one.** `leapter push` uploads the draft;
+`leapter release` publishes it. The runtime executes *released artifacts only* —
+a blueprint that was pushed but never released keeps running the previous
+release, or fails with `No release exists for app …`. This fails silently in the
+worst way: a corrected rate that was pushed and not released goes on computing
+with the old value, and nothing reports an error.
+
+```bash
+leapter validate && leapter push && leapter release --name 1.0.0
+leapter runtime run remote --model <slug> --input '{}'   # verify what is live
+```
 
 **Important:** If the user asks to create a blueprint or project and there is no
 `leapter.project` file in the working directory, run `leapter init project` first
@@ -248,8 +303,10 @@ leapter runtime run --model <slug> --file test-input.json
 echo '{"x": 42}' | leapter runtime run --model <slug>
 ```
 
-The `--model` flag accepts a **slug** (directory name under `logic/`) or a
-path to a `.logic.vts` file. Results are printed as structured JSON.
+The `--model` flag accepts a **slug**, the blueprint UUID, or a path to a
+`.logic.vts` file. The slug is the canonical underscore form the CLI prints
+(`claim_assessment`); the directory name under `logic/` (`claim-assessment`)
+works as an alias. Results are printed as structured JSON.
 
 Use `--node <node-id>` to execute a specific subtree for focused testing.
 
@@ -415,10 +472,9 @@ Before running `leapter push`:
 
 ### Step 9. Push & build a website (when ready)
 
-When you want a **production website** backed by Leapter's hosted runtime, push
-the blueprints to Leapter Lab. Pushed blueprints are immediately available —
-there is no separate deploy step. This is the only step that requires
-authentication.
+When you want a **production website** backed by Leapter blueprints, you need
+the hosted runtime. Pushed blueprints are immediately available — there is no
+separate deploy step. This is the only step that requires authentication.
 
 #### 9a. Authenticate and push
 
@@ -445,6 +501,17 @@ leapter runtime api-key create                  # Creates read+execute key, stor
 
 The key is created server-side with read + execute scope for this project.
 It's stored in `.leapter/.remote-config` (mode 0o600) and never printed in full.
+
+For a client that only reads (runs, the project timeline, release artifacts)
+and must not run blueprints, create a read-only key:
+
+```bash
+leapter runtime api-key create --read-only      # read scope only, default name "CLI Read-only — <project>"
+```
+
+The CLI prints this key once and does **not** store it: the stored key serves
+`leapter runtime run remote`, which needs execute. Copy the key to where the
+reading client needs it (for example its `LEAPTER_API_KEY`).
 
 **Option 2 — Create via web UI:**
 
@@ -487,9 +554,9 @@ const { outputData } = await response.json();
 **Request format:** Fields go at the top level (not nested under `input`).
 **Response format:** Output data is in `outputData` (not `output` or `data`).
 
-### Step 10. Clone (pull remote project)
+### Step 10. Clone (download a remote project)
 
-To download a remote project as local `.vts` files:
+To download a remote project into a new directory as local `.vts` files:
 
 ```bash
 leapter clone                                   # List available projects
@@ -502,6 +569,40 @@ to `.leapter/.remote-config`. The cloned `leapter.project` manifest retains the
 server's project ID, so subsequent `leapter push` commands work immediately.
 
 **Note:** Clone cannot be run inside an existing Leapter project directory.
+
+### Step 11. Pull (bring Lab changes into the working copy)
+
+When someone changes blueprints, tests or types in Lab, bring that state into
+the working copy that `push` or `clone` linked to the project, then test it
+locally:
+
+```bash
+leapter pull                                    # Stream head of the linked project
+leapter validate && leapter test run            # Check what came from Lab
+```
+
+The loop is: **change in Lab → `leapter pull` → `leapter test run`**.
+
+`pull` makes the project files — `leapter.project`, everything under `logic/`
+(blueprints and `tests/`) and under `data/` — equal to Lab. A file Lab has
+replaces the local one; a file Lab no longer has is deleted. `.leapter/` and
+all other files stay untouched. The pulled sources carry the node markers Lab
+assigned (`//#id`, `@X-…`), so local traces keep stable node IDs. The report
+has the format of `push`: `+ <path> (new)`, `~ <path> (changed)`,
+`- <path> (removed)`, then the counts, or `Already up to date.`
+
+`pull` does not merge. `push`, `pull` and `clone` record the project files as
+Lab has them in `.leapter/.sync` (sha256 per file). When a local file has changed
+since then, or is new, `pull` writes nothing and exits `2` with the list of
+files. Decide: `leapter push` sends the local changes to Lab,
+`leapter pull --force` replaces them with the Lab state. Without
+`.leapter/.sync` (a working copy from before `pull`), every local file that
+differs from Lab counts as a local change: run `leapter push` once, or
+`leapter pull --force`.
+
+Exit codes: `0` pulled or up to date, `1` no linked project (run `leapter push`
+first) or the download failed, `2` local changes (or no `leapter.project`),
+`3` not authenticated.
 
 ## REST API Reference
 
@@ -527,6 +628,151 @@ POST http://localhost:4004/api/v1/local/local/models/{slug}/runs
 ```
 
 The `appspaceId` and `appId` are UUIDs from your project configuration. Use `leapter runtime describe --remote` to get the full URLs.
+
+### CLI API: project timeline
+
+`GET https://{host}/api/v1/cli/project/timeline?appId={projectId}[&space={id|slug}][&stream={slug}][&since={release}][&page={n}]`
+
+Returns the releases of a project and one page of its changes, both newest
+first. Use it from a server-side app that holds an API key, for example to
+show which release is in production and what changed since.
+
+- `appId` — the project `id` from `leapter.project`.
+- `space` — the workspace (id or slug). Only necessary when the project id
+  exists in more than one of your workspaces (409 lists them). An API key is
+  bound to one workspace already.
+- `page` — 0-based page of changes, 50 per page. Default `0`.
+- `stream` — only the changes of this stream (`main`, a draft or a review).
+  An unknown slug gets 404 `Stream Not Found`.
+- `since` — only the changes after this release (for example `v1.0.0`): on
+  the stream the release was cut from, above the version it froze. An unknown
+  release gets 404 `Release Not Found`. With `stream` too, the stream must be
+  the one of the release, else 400. If the change the release was cut from is
+  no longer at that version (for example, it was deleted and a later change
+  took its version), or the release records no change, the answer is 409
+  `Release Anchor Moved` instead of a wrong list.
+- Auth: `X-API-Key` (the key needs **read** on the project — an execute-only
+  key gets 403), `Authorization: Bearer`, or a Lab session.
+
+```bash
+curl -H "X-API-Key: $LEAPTER_API_KEY" \
+  "https://lab.leapter.com/api/v1/cli/project/timeline?appId=<project-id>"
+
+# What changed since production v1.0.0?
+curl -H "X-API-Key: $LEAPTER_API_KEY" \
+  "https://lab.leapter.com/api/v1/cli/project/timeline?appId=<project-id>&since=v1.0.0"
+```
+
+```json
+{
+  "project": { "id": "…", "label": "…", "workspace": { "id": "…", "slug": "…" } },
+  "releases": [
+    { "id": "…", "versionName": "v1.0.0", "description": "…",
+      "contentDigest": "sha256:…", "blueprintDigests": { "logic/…/….logic.vts": "sha256:…" },
+      "sourceAppVersion": 6, "sourceStreamId": "…", "sourceChangeId": "…",
+      "createdAt": "…", "createdBy": "…" }
+  ],
+  "changes": {
+    "items": [
+      { "id": "…", "appVersion": 6, "operation": "save", "source": "lab",
+        "title": "…", "description": "…", "streamName": "Main", "streamType": "main",
+        "affectedCount": 2, "authorName": "…", "gitCommitSha": null, "createdAt": "…" }
+    ],
+    "page": 0, "pageSize": 50, "totalCount": 6, "hasNextPage": false
+  }
+}
+```
+
+`sourceChangeId` is the `id` of the change the release was cut from, or
+`null` when the release records none. Use it to find the release in
+`changes.items`.
+
+`blueprintDigests` maps each blueprint path to its sha256. Compare it with the
+sha256 of your local `.vts` files to see which blueprints differ from a
+release. `workspace.slug` is `null` when the project is not in one of your
+workspaces.
+
+### CLI API: project streams
+
+`GET https://{host}/api/v1/cli/project/streams?appId={projectId}[&space={id|slug}]`
+
+Returns the open streams of a project with their head versions: the main stream
+first, then the drafts, newest updated first. Use it to let a person pick a
+draft, and to pin one version before a batch of runs —
+`stream:<slug>@<headAppVersion>`, read once, so a replay never mixes two
+versions.
+
+- `appId` — the project `id` from `leapter.project`.
+- `space` — the workspace (id or slug). Only necessary when the project id
+  exists in more than one of your workspaces (409 lists them). An API key is
+  bound to one workspace already.
+- Auth: `X-API-Key` (the key needs **read** on the project — an execute-only
+  key gets 403), `Authorization: Bearer`, or a Lab session.
+- Only streams somebody still works on. A draft under review is listed —
+  `status` is `reviewing` — because edits on it land in the same draft. An
+  abandoned, applied or archived draft is never listed, and neither are the
+  agent's internal streams.
+
+```bash
+curl -H "X-API-Key: $LEAPTER_API_KEY" \
+  "https://lab.leapter.com/api/v1/cli/project/streams?appId=<project-id>"
+```
+
+```json
+{
+  "streams": [
+    { "slug": "main", "name": "Main", "type": "main", "status": "active",
+      "headAppVersion": 6, "baseStreamSlug": null,
+      "updatedAt": "2026-09-20T10:00:00.000Z" },
+    { "slug": "hail-rules", "name": "Hail rules", "type": "draft",
+      "status": "active", "headAppVersion": 9, "baseStreamSlug": "main",
+      "updatedAt": "2026-09-24T10:00:00.000Z" }
+  ]
+}
+```
+
+`baseStreamSlug` is the stream this one branched from — `null` for main, which
+has none, and for a base that no longer exists. Pass a `slug` as `stream` to
+the timeline route to read the changes of that stream.
+
+### CLI API: release artifact
+
+`GET https://{host}/api/v1/cli/project/release-artifact?appId={projectId}[&space={id|slug}][&version={versionName}]`
+
+Returns one release of a project and its artifact: the JSON that the runtime
+executes for that release. Use it to show the rule text that decided a run of a
+release — the artifact carries the node ids of the run, and each section with
+its label and description.
+
+- `appId` — the project `id` from `leapter.project`.
+- `space` — the workspace (id or slug). Only necessary when the project id
+  exists in more than one of your workspaces (409 lists them). An API key is
+  bound to one workspace already.
+- `version` — the release name, for example `v1.0.0`. Omit it for the newest
+  release. An empty `version` is a 400.
+- Auth: `X-API-Key` (the key needs **read** on the project — an execute-only
+  key gets 403), `Authorization: Bearer`, or a Lab session.
+- 404 `Release Not Found` — no release with that name, or no release at all.
+
+```bash
+curl -H "X-API-Key: $LEAPTER_API_KEY" \
+  "https://lab.leapter.com/api/v1/cli/project/release-artifact?appId=<project-id>&version=v1.0.0"
+```
+
+```json
+{
+  "release": { "id": "…", "versionName": "v1.0.0", "description": "…",
+    "contentDigest": "sha256:…", "blueprintDigests": { "logic/…/….logic.vts": "sha256:…" },
+    "sourceAppVersion": 6, "sourceStreamId": "…", "sourceChangeId": "…",
+    "createdAt": "…", "createdBy": "…" },
+  "artifact": { "version": "2", "app": { … }, "models": [ … ], "typeModel": { … } }
+}
+```
+
+`release` has the same fields as an entry of `releases` in the timeline;
+`sourceChangeId` is `null` when the release records no change. `artifact` is
+passed through unchanged. Do not expect a fixed schema beyond `version`, `app`
+and `models`.
 
 ## Troubleshooting
 
