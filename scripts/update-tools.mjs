@@ -26,6 +26,14 @@ const vendorMapping = {
   'runtime-browser.d.ts': [
     'packages/runtime-browser/runtime-browser.d.ts'
   ],
+  // The engine the browser runs on. It must land BESIDE the bundle: the bundle
+  // asks for it with `new URL('./veritas_engine_ffi.wasm', import.meta.url)`,
+  // so Next resolves it relative to `runtime-browser.mjs` and emits it as a
+  // hashed asset under /_next/static/media/. Anywhere else and the browser
+  // falls back to nothing — the run is refused, never handed to QuickJS.
+  'veritas_engine_ffi.wasm': [
+    'packages/runtime-browser/veritas_engine_ffi.wasm'
+  ],
   'build-info.json': [
     '.leapter-tools/cli/build-info.json',
     '.leapter-tools/build-info.json'
@@ -37,6 +45,7 @@ const expectedFiles = [
   'leapter-blueprint-viewer.vsix',
   'runtime-browser.mjs',
   'runtime-browser.d.ts',
+  'veritas_engine_ffi.wasm',
   'build-info.json',
   'SHA256SUMS'
 ];

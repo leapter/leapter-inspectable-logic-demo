@@ -7,46 +7,50 @@ by size), a per-topping charge, an upcharge for premium crusts, and a final
 day-of-week multiplier that rewards off-peak ordering and prices in peak nights.
 All amounts are in USD.
 """
-function calculatePizzaPrice(
-  //* Size of the pizza
-  pizzaSize: type _text choice ["small", "medium", "large"],
+function calculatePizzaPrice {
 
-  //* Selected topping IDs
-  toppings: list of text,
+  inputs {
+    //* Size of the pizza
+    pizzaSize: _text choice ["small", "medium", "large"]
+    //* Selected topping IDs
+    toppings: list of _text
+    //* Type of crust
+    crustType: _text choice ["thin", "regular", "stuffed"]
+    //* Day the pizza is being ordered
+    dayOfWeek: _text choice ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+  }
 
-  //* Type of crust
-  crustType: type _text choice ["thin", "regular", "stuffed"],
+  outputs {
+    //* Final price for the chosen day, in USD
+    totalPrice: number
+    //* Base price determined by pizza size
+    basePrice: number
+    //* Combined cost of all toppings
+    toppingsCost: number
+    //* Upcharge applied for premium crust selections
+    crustUpcharge: number
+    //* Pre-day-of-week subtotal (base + toppings + crust)
+    subtotal: number
+    //* Day-of-week multiplier applied to the subtotal (1.0 = no change)
+    dayMultiplier: number
+    //* Total price for each weekday in Monday-to-Sunday order
+    weeklyPrices: list of number
+  }
 
-  //* Day the pizza is being ordered
-  dayOfWeek: type _text choice ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]) ->
-  //* Final price for the chosen day, in USD
-  totalPrice: number,
+  locals {
+    @V-d34fed8e
+    //* Per-day multipliers
+    weeklyMultipliers: list of number = [1, 0.8, 0.9, 1, 1.1, 1.15, 1]
+  }
 
-  //* Base price determined by pizza size
-  basePrice: number,
-
-  //* Combined cost of all toppings
-  toppingsCost: number,
-
-  //* Upcharge applied for premium crust selections
-  crustUpcharge: number,
-
-  //* Pre-day-of-week subtotal (base + toppings + crust)
-  subtotal: number,
-
-  //* Day-of-week multiplier applied to the subtotal (1.0 = no change)
-  dayMultiplier: number,
-
-  //* Total price for each weekday in Monday-to-Sunday order
-  weeklyPrices: list of number {
   @S-a4a04bf5
   section "Determine base price by pizza size" {
     """
-        Each pizza size has a fixed base price set by the menu. This is the
-        starting point of the calculation before toppings and crust upgrades
-        are added on top. Larger pizzas use more dough, sauce, and cheese,
-        which is reflected in the higher base.
-        """
+    Each pizza size has a fixed base price set by the menu. This is the
+    starting point of the calculation before toppings and crust upgrades
+    are added on top. Larger pizzas use more dough, sauce, and cheese,
+    which is reflected in the higher base.
+    """
     @D-d2efa8db
     //* Look up base price by pizza size
     choose {
@@ -83,18 +87,18 @@ function calculatePizzaPrice(
   @V-bb6e4287
   //* Calculate topping cost
   """
-    Every topping is charged at a flat rate of $1.50 regardless of which
-    topping is chosen. The total topping cost is the per-topping price
-    times the number of selected toppings.
-    """
-  toppingsCost = toppings.length * 1.5;
+  Every topping is charged at a flat rate of $1.50 regardless of which
+  topping is chosen. The total topping cost is the per-topping price
+  times the number of selected toppings.
+  """
+  toppingsCost = length(toppings) * 1.5;
   @S-d6d0476a
   section "Apply crust upcharge" {
     """
-        Thin and regular crusts are included in the base price. Stuffed crust
-        requires extra dough and cheese filling, so it carries a flat $3
-        upcharge added on top of the base price.
-        """
+    Thin and regular crusts are included in the base price. Stuffed crust
+    requires extra dough and cheese filling, so it carries a flat $3
+    upcharge added on top of the base price.
+    """
     @V-2076cd2e
     //* Default to no crust upcharge
     crustUpcharge = 0;
@@ -113,23 +117,23 @@ function calculatePizzaPrice(
   @V-55ca2d14
   //* Compute pre-day subtotal
   """
-    The subtotal combines the base price, all toppings, and the crust
-    upcharge. It represents the price of the pizza before any day-of-week
-    discount or premium is applied. We expose it as an output so the UI
-    can show the customer the underlying price independent of timing.
-    """
+  The subtotal combines the base price, all toppings, and the crust
+  upcharge. It represents the price of the pizza before any day-of-week
+  discount or premium is applied. We expose it as an output so the UI
+  can show the customer the underlying price independent of timing.
+  """
   subtotal = basePrice + toppingsCost + crustUpcharge;
   @S-6936b94e
   section "Look up day-of-week multiplier" {
     """
-        Day-of-week pricing rewards customers who order on quieter nights and
-        slightly raises prices on the busiest ones. Tuesday is the headline
-        Pizza Tuesday discount at 20% off; Wednesday adds a smaller 10% off.
-        Friday and Saturday carry premiums (10% and 15%) because the kitchen
-        runs at peak load. Monday, Thursday, and Sunday stay at the regular
-        rate. The multiplier is later applied to the subtotal to produce the
-        final price.
-        """
+    Day-of-week pricing rewards customers who order on quieter nights and
+    slightly raises prices on the busiest ones. Tuesday is the headline
+    Pizza Tuesday discount at 20% off; Wednesday adds a smaller 10% off.
+    Friday and Saturday carry premiums (10% and 15%) because the kitchen
+    runs at peak load. Monday, Thursday, and Sunday stay at the regular
+    rate. The multiplier is later applied to the subtotal to produce the
+    final price.
+    """
     @D-415f7db4
     //* Look up multiplier for the chosen day
     choose {
@@ -173,19 +177,15 @@ function calculatePizzaPrice(
   @S-4041f465
   section "Compute total and weekly comparison prices" {
     """
-        The final total is the subtotal scaled by the active day multiplier.
-        We also pre-compute the price for every day of the week so the UI can
-        show the customer how much they would have saved or paid extra by
-        ordering on a different day. All amounts are rounded to two decimal
-        places for clean dollar-and-cent display.
-        """
+    The final total is the subtotal scaled by the active day multiplier.
+    We also pre-compute the price for every day of the week so the UI can
+    show the customer how much they would have saved or paid extra by
+    ordering on a different day. All amounts are rounded to two decimal
+    places for clean dollar-and-cent display.
+    """
     @V-6cd4aa0b
     //* Round chosen-day total to two decimal places
-    totalPrice = Math.round(subtotal * dayMultiplier * 100) / 100;
-    @V-d34fed8e
-    //* Day multipliers in Monday-to-Sunday order (Tuesday and Wednesday discounted, Friday and Saturday premium, others regular)
-    var //* Per-day multipliers
-        weeklyMultipliers: list of number = [1, 0.8, 0.9, 1, 1.1, 1.15, 1];
+    totalPrice = round(subtotal * dayMultiplier, 2);
     @V-62da184c
     //* Start with an empty weekly prices list
     weeklyPrices = [];
@@ -194,7 +194,7 @@ function calculatePizzaPrice(
     for (var multiplier in weeklyMultipliers) {
       @X-683735a2
       //* Append rounded day price
-      weeklyPrices.push(Math.round(subtotal * multiplier * 100) / 100);
+      weeklyPrices = append(weeklyPrices, round(subtotal * multiplier, 2));
     }
   }
   @R-6726d8e5
